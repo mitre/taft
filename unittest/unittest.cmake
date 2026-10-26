@@ -11,5 +11,5 @@ add_custom_target(run_tests
    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/unittest/
 )
 add_dependencies(run_tests
-   run_fmacm_test
+   run_taft_test
 )
