@@ -1,0 +1,49 @@
+; A an example scenario to show how the CSV files produced 
+; for RTCA can be loaded and run with this code.
+
+; Bada data file input
+bada_data_path "/data/aaesim/regressionScens/bada"
+
+; Aircraft definition
+aircraft
+{
+    ; initialization information for this aircraft
+    initial_altitude 35000 ; feet
+    initial_ias 280 ; knots
+    initial_mach 0
+
+    ; Aircraft type: JET1, JET2, JET3, JET4, JET5, JET6. No default.
+    ac_type {actype}
+
+    ; Speed management setting: pitch or thrust
+    speed_management_type pitch
+    
+    ; ENV file, containing weather data by time and distance-to-go
+    env_csv_file "./FimAcTv-P~W_JET_ENV.csv"
+
+    aircraft_intent
+    {
+        ; define the csv file that contains the horizontal profile
+        hfp_csv_file "./FimAcTv-P~W_JET_HFP.csv"
+    }
+
+    precalc_traj_file
+    {
+        ; define the csv file that contain the horizontal profile
+        hfp_csv_file "./FimAcTv-P~W_JET_HFP.csv"
+
+        ; define the csv file that contain the vertical profile
+        vfp_csv_file "./FimAcTv-P~W_JET_VFP.csv"
+    }
+
+    flight_deck_application
+    {
+        IM_speed_commands_from_file
+        {
+            imspd_csv_file "./FimAcTv-P~W_JET_Im_Spd.csv"
+            use_pilot_delay false
+            pilot_delay_seconds 0
+        }
+    } ; flight_deck_application
+
+} ; aircraft
