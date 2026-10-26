@@ -35,7 +35,7 @@
 #include "public/PrecalcWaypoint.h"
 #include "utility/BoundedValue.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class GuidanceFromStaticData final : aaesim::open_source::GuidanceCalculator {
   public:
    struct VerticalData {
@@ -119,4 +119,4 @@ inline GuidanceFromStaticData::TurnDirection GuidanceFromStaticData::GetTurnDire
       return RIGHT;
    }
 }
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

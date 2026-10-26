@@ -24,7 +24,8 @@
 
 #include "MiniCSV/minicsv.h"
 
-using namespace fmacm::loader;
+
+namespace mitre::oss::taft::loader {
 
 bool SpeedCommandsLoader::load(DecodedStream *input) {
    set_stream(input);
@@ -67,3 +68,5 @@ const std::vector<SpeedCommandsFromStaticData::SpeedRecord> SpeedCommandsLoader:
 
    return speed_data;
 }
+
+}  // namespace mitre::oss::taft::loader

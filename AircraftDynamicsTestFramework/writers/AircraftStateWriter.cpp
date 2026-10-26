@@ -22,11 +22,13 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> fmacm::AircraftStateWriter::COLUMN_NAMES = {
+namespace mitre::oss::taft {
+
+std::vector<std::string> AircraftStateWriter::COLUMN_NAMES = {
       "Time[sec]", "V(ias)[m/s]", "V(tas)[m/s]", "vRate[m/s]",    "x[m]",
       "y[m]",      "h[m]",        "gs[mps]",     "latitude[deg]", "longitude[deg]"};
 
-void fmacm::AircraftStateWriter::Finish() {
+void AircraftStateWriter::Finish() {
    if (m_data_to_write.empty()) {
       return;
    }
@@ -64,7 +66,7 @@ void fmacm::AircraftStateWriter::Finish() {
    m_data_to_write.clear();
 }
 
-void fmacm::AircraftStateWriter::Gather(std::vector<aaesim::open_source::AircraftState> aircraft_states) {
+void AircraftStateWriter::Gather(std::vector<aaesim::open_source::AircraftState> aircraft_states) {
    auto data_gatherer = [this](const aaesim::open_source::AircraftState &state) {
       DataToWrite data;
       data.altitude_msl = state.GetAltitudeMsl();
@@ -81,3 +83,5 @@ void fmacm::AircraftStateWriter::Gather(std::vector<aaesim::open_source::Aircraf
    };
    std::for_each(aircraft_states.cbegin(), aircraft_states.cend(), data_gatherer);
 }
+
+}  // namespace mitre::oss::taft

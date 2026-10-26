@@ -27,7 +27,7 @@
 #include "public/ADSBReceiver.h"
 #include "public/TangentPlaneSequence.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class PreloadedAdsbReceiver final : public aaesim::open_source::ADSBReceiver {
   public:
    PreloadedAdsbReceiver() = default;
@@ -54,4 +54,4 @@ class PreloadedAdsbReceiver final : public aaesim::open_source::ADSBReceiver {
                                                                                                // stored as
                                                                                                // [time][report_vector]
 };
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

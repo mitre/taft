@@ -33,7 +33,7 @@
 #include "public/DataReader.h"
 #include "public/WeatherPrediction.h"
 
-namespace testvector {
+namespace mitre::oss::taft::testvector {
 
 class ForeWindReader final : aaesim::open_source::DataReader {
   public:
@@ -45,4 +45,4 @@ class ForeWindReader final : aaesim::open_source::DataReader {
   private:
 };
 
-}  // namespace testvector
+}  // namespace mitre::oss::taft::testvector

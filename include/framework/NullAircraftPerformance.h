@@ -24,7 +24,7 @@
 
 #include "public/FixedMassAircraftPerformance.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class NullAircraftPerformance final : public aaesim::open_source::FixedMassAircraftPerformance {
   public:
    NullAircraftPerformance() = default;
@@ -133,4 +133,4 @@ class NullAircraftPerformance final : public aaesim::open_source::FixedMassAircr
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 };
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

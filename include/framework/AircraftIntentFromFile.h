@@ -14,12 +14,14 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #pragma once
 
 #include "public/AircraftIntent.h"
+
+namespace mitre::oss::taft {
 
 class AircraftIntentFromFile : public AircraftIntent {
   public:
@@ -43,3 +45,5 @@ class AircraftIntentFromFile : public AircraftIntent {
 
    int LocalStringToInt(const std::string &s);
 };
+
+}  // namespace mitre::oss::taft

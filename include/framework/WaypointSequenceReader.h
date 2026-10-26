@@ -28,7 +28,7 @@
 #include "public/DataReader.h"
 #include "utility/CustomUnits.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class WaypointSequenceReader final : aaesim::open_source::DataReader {
   public:
    struct WaypointSequenceRow {
@@ -45,4 +45,4 @@ class WaypointSequenceReader final : aaesim::open_source::DataReader {
    WaypointSequenceReader(const std::string &file_name) : DataReader(file_name, 1, 4) {};
    std::vector<WaypointSequenceRow> ReadFile();
 };
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

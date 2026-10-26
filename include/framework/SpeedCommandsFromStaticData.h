@@ -28,6 +28,8 @@
 #include "public/FlightDeckApplication.h"
 #include "public/Guidance.h"
 
+namespace mitre::oss::taft {
+
 class SpeedCommandsFromStaticData final : public aaesim::open_source::FlightDeckApplication {
   public:
    struct SpeedRecord {
@@ -58,3 +60,5 @@ class SpeedCommandsFromStaticData final : public aaesim::open_source::FlightDeck
    double m_ias_hist[m_hist_len]{};
    Units::SecondsTime m_pilot_delay_seconds;
 };
+
+}  // namespace mitre::oss::taft

@@ -26,7 +26,8 @@
 #include <string>
 #include <utility>
 
-using namespace testvector;
+namespace mitre::oss::taft::testvector {
+
 using namespace aaesim::open_source;
 
 HfpReader2020::HfpReader2020(std::string file_name, int header_lines)
@@ -148,3 +149,5 @@ Units::Angle HfpReader2020::GetTurnCenterLatitude() {
 Units::Angle HfpReader2020::GetTurnCenterLongitude() {
    return Units::DegreesAngle(GetDouble(m_turn_center_longitude_column));
 }
+
+}  // namespace mitre::oss::taft::testvector

@@ -25,7 +25,8 @@
 
 #include "public/CoreUtils.h"
 
-using namespace fmacm;
+namespace mitre::oss::taft {
+
 using namespace aaesim::open_source;
 
 log4cplus::Logger GuidanceFromStaticData::m_logger = log4cplus::Logger::getInstance("GuidanceFromStaticData");
@@ -205,3 +206,5 @@ aaesim::open_source::Guidance GuidanceFromStaticData::CalculateHorizontalGuidanc
    horizontal_guidance.m_use_cross_track = true;
    return horizontal_guidance;
 }
+
+}  // namespace mitre::oss::taft

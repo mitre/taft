@@ -37,6 +37,8 @@
 #include "imalgs/PredictionFileKinematic.h"
 #endif
 
+namespace mitre::oss::taft {
+
 class TestFrameworkScenario final : public aaesim::open_source::Scenario, public LoggingLoadable {
   public:
    TestFrameworkScenario();
@@ -52,7 +54,7 @@ class TestFrameworkScenario final : public aaesim::open_source::Scenario, public
    static log4cplus::Logger m_logger;
 
    bool AdvanceAllAircraft(aaesim::open_source::SimulationTime &time);
-   void PostLoad(const std::string &bada_data_path, std::vector<fmacm::FrameworkAircraftLoader> &aircraft_loaders);
+   void PostLoad(const std::string &bada_data_path, std::vector<FrameworkAircraftLoader> &aircraft_loaders);
 
    std::vector<std::shared_ptr<TestFrameworkAircraft>> m_aircraft_in_scenario;
 
@@ -61,3 +63,5 @@ class TestFrameworkScenario final : public aaesim::open_source::Scenario, public
    std::unique_ptr<interval_management::open_source::PredictionFileKinematic> m_sample_algorithm_kinematic_writer;
 #endif
 };
+
+}  // namespace mitre::oss::taft

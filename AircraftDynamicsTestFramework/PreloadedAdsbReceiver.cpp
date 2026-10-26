@@ -28,20 +28,22 @@
 #include "public/EarthModel.h"
 #include "public/TvReader.h"
 
-fmacm::PreloadedAdsbReceiver::PreloadedAdsbReceiver(const std::string &ttv_csv_file,
+namespace mitre::oss::taft {
+
+PreloadedAdsbReceiver::PreloadedAdsbReceiver(const std::string &ttv_csv_file,
                                                     std::shared_ptr<TangentPlaneSequence> tangent_plane_sequence)
    : m_ttv_filename(ttv_csv_file), m_tanget_plane_sequence(tangent_plane_sequence) {}
 
-aaesim::open_source::ADSBSVReport fmacm::PreloadedAdsbReceiver::GetCurrentADSBReport(int id) const {
+aaesim::open_source::ADSBSVReport PreloadedAdsbReceiver::GetCurrentADSBReport(int id) const {
    if (m_most_recent_adsb_reports.empty()) return aaesim::open_source::ADSBSVReport::EMPTY_REPORT;
    return m_most_recent_adsb_reports.at(id);
 }
 
-aaesim::open_source::ADSBSVReport fmacm::PreloadedAdsbReceiver::GetADSBReportBefore(int id, Units::Time time) const {
+aaesim::open_source::ADSBSVReport PreloadedAdsbReceiver::GetADSBReportBefore(int id, Units::Time time) const {
    throw std::runtime_error("Unimplemented GetADSBReportBefore");
 }
 
-const std::vector<aaesim::open_source::ADSBSVReport> &fmacm::PreloadedAdsbReceiver::GetReportsReceivedByTime(
+const std::vector<aaesim::open_source::ADSBSVReport> &PreloadedAdsbReceiver::GetReportsReceivedByTime(
       const aaesim::open_source::SimulationTime &time) const {
    if (m_reports_received_by_time.empty() ||
        m_reports_received_by_time.find(time.GetCycle()) == m_reports_received_by_time.end()) {
@@ -52,15 +54,15 @@ const std::vector<aaesim::open_source::ADSBSVReport> &fmacm::PreloadedAdsbReceiv
 }
 
 const std::map<int, std::vector<aaesim::open_source::ADSBSVReport> > &
-      fmacm::PreloadedAdsbReceiver::GetAllReportsReceived() const {
+      PreloadedAdsbReceiver::GetAllReportsReceived() const {
    return m_all_reports_received;
 }
 
-std::map<int, aaesim::open_source::ADSBSVReport> const fmacm::PreloadedAdsbReceiver::GetCurrentADSBReport() const {
+std::map<int, aaesim::open_source::ADSBSVReport> const PreloadedAdsbReceiver::GetCurrentADSBReport() const {
    return m_most_recent_adsb_reports;
 }
 
-void fmacm::PreloadedAdsbReceiver::Initialize(Units::Length adsb_reception_range_threshold) {
+void PreloadedAdsbReceiver::Initialize(Units::Length adsb_reception_range_threshold) {
    aaesim::open_source::TvReader data_reader(m_ttv_filename, 1);
    while (data_reader.Advance()) {
       EarthModel::GeodeticPosition geo_position;
@@ -88,7 +90,7 @@ void fmacm::PreloadedAdsbReceiver::Initialize(Units::Length adsb_reception_range
    }
 }
 
-std::map<int, aaesim::open_source::ADSBSVReport> fmacm::PreloadedAdsbReceiver::Receive(
+std::map<int, aaesim::open_source::ADSBSVReport> PreloadedAdsbReceiver::Receive(
       const aaesim::open_source::SimulationTime &time, const aaesim::open_source::AircraftState &state) {
    auto surveillance_reports = GetReportsReceivedByTime(time);
    if (surveillance_reports.empty()) return std::map<int, aaesim::open_source::ADSBSVReport>{};
@@ -97,3 +99,5 @@ std::map<int, aaesim::open_source::ADSBSVReport> fmacm::PreloadedAdsbReceiver::R
          std::make_pair(surveillance_reports.front().GetId(), surveillance_reports.front()));
    return m_most_recent_adsb_reports;
 }
+
+}  // namespace mitre::oss::taft

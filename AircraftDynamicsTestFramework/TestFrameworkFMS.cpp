@@ -14,7 +14,7 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/TestFrameworkFMS.h"
@@ -27,6 +27,8 @@
 #include "public/AircraftCalculations.h"
 #include "math/CustomMath.h"  // FIXME Stuart why is thsi here?
 #include "utility/UtilityConstants.h"
+
+namespace mitre::oss::taft {
 
 namespace constants = aaesim::open_source::constants;
 
@@ -215,3 +217,5 @@ void TestFrameworkFMS::CopyWaypointsFromIntent(const AircraftIntent &intent_in) 
 }
 
 bool TestFrameworkFMS::IsFinished() { return m_decrementing_distance_calculator.IsPassedEndOfRoute(); }
+
+}  // namespace mitre::oss::taft

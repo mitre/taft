@@ -14,7 +14,7 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/IMSpeedCommandFile.h"
@@ -22,6 +22,8 @@
 #include <string>
 #include <stdlib.h>
 #include "utility/CsvParser.h"
+
+namespace mitre::oss::taft {
 
 IMSpeedCommandFile::IMSpeedCommandFile() : m_ias_hist(), m_apply_pilot_delay(false) {
 
@@ -159,3 +161,5 @@ bool IMSpeedCommandFile::SpeedRecord::operator==(const IMSpeedCommandFile::Speed
 bool IMSpeedCommandFile::SpeedRecord::operator!=(const IMSpeedCommandFile::SpeedRecord &sr) const {
    return !(*this == sr);
 }
+
+}  // namespace mitre::oss::taft

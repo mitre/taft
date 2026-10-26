@@ -21,6 +21,8 @@
 
 #include <vector>
 
+namespace mitre::oss::taft {
+
 SpeedCommandsFromStaticData::SpeedCommandsFromStaticData() : m_speed_data(), m_pilot_delay_seconds(0) {}
 
 SpeedCommandsFromStaticData::SpeedCommandsFromStaticData(
@@ -72,3 +74,5 @@ aaesim::open_source::Guidance SpeedCommandsFromStaticData::Update(
 }
 
 bool SpeedCommandsFromStaticData::IsActive() const { return true; }
+
+}  // namespace mitre::oss::taft

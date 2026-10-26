@@ -12,7 +12,7 @@
 // contact The MITRE Corporation, Contracts Office, 7515 Colshire Drive,
 // McLean, VA  22102-7539, (703) 983-6000. 
 //
-// Copyright 2018 The MITRE Corporation. All Rights Reserved.
+// (c) 2018-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #pragma once
@@ -28,6 +28,8 @@
 #include "public/WeatherTruth.h"
 
 // State in State out replacement for AircraftEOM aircraft dynamics model
+namespace mitre::oss::taft {
+
 class TestFrameworkDynamics : public Loadable
 {
 public:
@@ -205,3 +207,5 @@ private:
 
    Units::Speed m_wind_velocity_x, m_wind_velocity_y;  // True wind direction values computed by dynamics and speed_on_pitch_control_dynamics (m/s).
 };
+
+}  // namespace mitre::oss::taft

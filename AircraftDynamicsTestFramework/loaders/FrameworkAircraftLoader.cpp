@@ -53,7 +53,8 @@
 #include "bada/BadaAtmosphere37.h"
 #endif
 
-using namespace fmacm;
+namespace mitre::oss::taft {
+
 using namespace aaesim::open_source;
 
 double FrameworkAircraftLoader::m_mass_fraction_default = 0.5;
@@ -126,13 +127,13 @@ std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> FrameworkAirc
    initial_conditions.mass_percentile = m_mass_fraction;
    return aaesim::bada::Bada3Factory::CreateBada3ForwardProgression(bada_aircraft_code, initial_conditions);
 #else
-   return std::make_shared<fmacm::NullAircraftPerformance>();
+   return std::make_shared<NullAircraftPerformance>();
 #endif
 }
 
 std::shared_ptr<aaesim::open_source::ThreeDOFDynamics> FrameworkAircraftLoader::BuildAircraftDynamics(
       std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &performance,
-      std::shared_ptr<fmacm::WeatherTruthFromStaticData> &true_weather,
+      std::shared_ptr<WeatherTruthFromStaticData> &true_weather,
       std::shared_ptr<GuidanceFromStaticData> &guidance, const EarthModel::GeodeticPosition &initial_wgs84_position) {
    auto initial_altitude = Units::MetersLength(guidance->GetVerticalData().m_altitude_meters.back());
    Units::KnotsSpeed initial_ias = Units::MetersPerSecondSpeed(guidance->GetVerticalData().m_ias_mps.back());
@@ -209,16 +210,16 @@ EarthModel::LocalPositionEnu FrameworkAircraftLoader::ComputeInitialPositionOnPa
    return std::get<1>(dtg_result);
 }
 
-std::shared_ptr<fmacm::WeatherTruthFromStaticData> FrameworkAircraftLoader::BuildTrueWeather(
+std::shared_ptr<WeatherTruthFromStaticData> FrameworkAircraftLoader::BuildTrueWeather(
       const std::string &env_csv_file, const std::string &env_csv_data_index, Units::Length initial_altitude) {
    if (!env_csv_file.empty()) {
-      auto weather_truth = std::make_shared<fmacm::WeatherTruthFromStaticData>();
+      auto weather_truth = std::make_shared<WeatherTruthFromStaticData>();
       weather_truth->Initialize(env_csv_file, initial_altitude,
-                                fmacm::WeatherTruthFromStaticData::DataIndexFromString(env_csv_data_index));
+                                WeatherTruthFromStaticData::DataIndexFromString(env_csv_data_index));
       return weather_truth;
    } else {
-      return std::make_shared<fmacm::WeatherTruthFromStaticData>(
-            fmacm::WeatherTruthFromStaticData::CreateZeroTruthWind());
+      return std::make_shared<WeatherTruthFromStaticData>(
+            WeatherTruthFromStaticData::CreateZeroTruthWind());
    }
 }
 
@@ -246,7 +247,7 @@ std::shared_ptr<aaesim::open_source::ADSBReceiver> FrameworkAircraftLoader::Buil
    if (!ttv_csv_file.empty()) {
       const Units::NauticalMilesLength adsb_reception_distance(90);
       std::shared_ptr<aaesim::open_source::ADSBReceiver> adsb_receiver =
-            std::make_shared<fmacm::PreloadedAdsbReceiver>(ttv_csv_file, m_guidance_loader.GetTangentPlaneSequence());
+            std::make_shared<PreloadedAdsbReceiver>(ttv_csv_file, m_guidance_loader.GetTangentPlaneSequence());
       adsb_receiver->Initialize(adsb_reception_distance);
       return adsb_receiver;
    }
@@ -314,3 +315,5 @@ std::shared_ptr<aaesim::open_source::FlightDeckApplication> FrameworkAircraftLoa
    return flightdeck_application;
 #endif
 }
+
+}  // namespace mitre::oss::taft

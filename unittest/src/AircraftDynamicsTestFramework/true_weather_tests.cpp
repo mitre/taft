@@ -20,7 +20,7 @@
 #include "framework/WeatherTruthFromStaticData.h"
 #include "gtest/gtest.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 namespace test {
 
 TEST(WeatherTruthFromStaticData, updated_using_simtime) {
@@ -64,4 +64,4 @@ TEST(WeatherTruthFromStaticData, create_zero) {
 }
 
 }  // namespace test
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

@@ -34,6 +34,8 @@
 #define ATMOSPHERE_IMPL NullAtmosphere
 #endif
 
+namespace mitre::oss::taft {
+
 class WeatherTruthByDistanceToGo : public ATMOSPHERE_IMPL, public aaesim::open_source::WeatherTruth, public Wind {
   public:
    class Weather {
@@ -76,3 +78,5 @@ class WeatherTruthByDistanceToGo : public ATMOSPHERE_IMPL, public aaesim::open_s
    std::map<Units::Length, Weather *> m_weather_by_dtg;
    Weather *m_weather;
 };
+
+}  // namespace mitre::oss::taft

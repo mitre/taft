@@ -14,7 +14,7 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #pragma once
@@ -23,6 +23,8 @@
 #include "public/Guidance.h"
 #include <scalar/Time.h>
 #include <scalar/Speed.h>
+
+namespace mitre::oss::taft {
 
 class IMSpeedCommandFile : public Loadable {
 
@@ -69,3 +71,5 @@ class IMSpeedCommandFile : public Loadable {
    bool m_apply_pilot_delay;
    bool m_loaded;
 };
+
+}  // namespace mitre::oss::taft

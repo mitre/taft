@@ -23,6 +23,8 @@
 
 #include "public/Guidance.h"
 
+namespace mitre::oss::taft {
+
 using namespace std;
 using namespace aaesim::open_source;
 
@@ -100,7 +102,7 @@ TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAircraftCont
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithTrueWeather(
-      std::shared_ptr<fmacm::WeatherTruthFromStaticData> &true_weather) {
+      std::shared_ptr<WeatherTruthFromStaticData> &true_weather) {
    true_weather_ = true_weather;
    return this;
 }
@@ -112,7 +114,7 @@ TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAdsbReceiver
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithGuidanceCalculator(
-      std::shared_ptr<fmacm::GuidanceFromStaticData> &guidance_calculator) {
+      std::shared_ptr<GuidanceFromStaticData> &guidance_calculator) {
    guidance_calculator_ = guidance_calculator;
    return this;
 }
@@ -128,3 +130,5 @@ TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithInitialState
    initial_state_ = initial_state;
    return this;
 }
+
+}  // namespace mitre::oss::taft

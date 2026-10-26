@@ -19,7 +19,8 @@
 
 #include "framework/WindInterpolator.h"
 
-using namespace fmacm;
+
+namespace mitre::oss::taft {
 
 Units::KelvinTemperature WindInterpolator::InterpolateTemperature(const Units::Angle latitude_in,
                                                                   const Units::Angle longitude_in,
@@ -69,6 +70,8 @@ void WindInterpolator::InterpolateWindMatrix(Units::Angle lat_in, Units::Angle l
    north_south.SortAltitudesAscending();
 }
 
-void WindInterpolator::UpdateWindDataPoint(const fmacm::WindInterpolator::WeatherDataPoint &data_point) {
+void WindInterpolator::UpdateWindDataPoint(const WindInterpolator::WeatherDataPoint &data_point) {
    m_weather_data_point = data_point;
 }
+
+}  // namespace mitre::oss::taft

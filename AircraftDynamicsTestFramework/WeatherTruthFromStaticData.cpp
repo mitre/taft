@@ -25,13 +25,14 @@
 
 #include "MiniCSV/minicsv.h"
 
-using namespace fmacm;
+
+namespace mitre::oss::taft {
 
 WeatherTruthFromStaticData::WeatherTruthFromStaticData()
    : m_weather_data_points_by_time(),
      m_weather_data_points_by_dtg(),
      m_weather_data_point(),
-     m_wind_interpolator(std::make_shared<fmacm::WindInterpolator>()),
+     m_wind_interpolator(std::make_shared<WindInterpolator>()),
      m_data_index(DataIndexParameter::SIMULATION_TIME) {
    m_wind = std::static_pointer_cast<Wind>(m_wind_interpolator);
    SetAtmosphere(std::make_shared<ATMOSPHERE_IMPL>());
@@ -136,3 +137,5 @@ void WeatherTruthFromStaticData::LoadConditionsAt(const Units::Angle latitude, c
       north_south().Insert(i, Units::MetersLength(alt_meters), m_weather_data_point.Vwy);
    }
 }
+
+}  // namespace mitre::oss::taft

@@ -12,7 +12,7 @@
 // contact The MITRE Corporation, Contracts Office, 7515 Colshire Drive,
 // McLean, VA  22102-7539, (703) 983-6000. 
 //
-// Copyright 2019 The MITRE Corporation. All Rights Reserved.
+// (c) 2019-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #pragma once
@@ -20,19 +20,13 @@
 #include <public/HorizontalPath.h>
 #include <vector>
 
-namespace aaesim {
-   namespace test {
-      namespace utils {
-         enum Quadrant {
-            FIRST, SECOND, THIRD, FOURTH
-         };
+namespace mitre::oss::taft::test::utils {
 
-         class PublicUtils
-         {
+enum Quadrant { FIRST, SECOND, THIRD, FOURTH };
 
-         public:
-            static std::vector<HorizontalPath> CreateStraightHorizontalPath(Quadrant quadrant);
-         };
-      }
-   }
-}
+class PublicUtils {
+  public:
+   static std::vector<aaesim::open_source::HorizontalPath> CreateStraightHorizontalPath(Quadrant quadrant);
+};
+
+}  // namespace mitre::oss::taft::test::utils

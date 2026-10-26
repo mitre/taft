@@ -25,7 +25,7 @@
 #include "public/AircraftState.h"
 #include "public/OutputHandler.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class AircraftStateWriter final : public OutputHandler {
   public:
    AircraftStateWriter() : OutputHandler("", "_AcStates.csv"), m_data_to_write() {}
@@ -51,4 +51,4 @@ class AircraftStateWriter final : public OutputHandler {
 
    std::vector<DataToWrite> m_data_to_write;
 };
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

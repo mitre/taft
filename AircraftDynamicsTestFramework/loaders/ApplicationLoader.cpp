@@ -29,7 +29,8 @@
 #include "imalgs/IMUtils.h"
 #endif
 
-using namespace fmacm;
+
+namespace mitre::oss::taft {
 
 ApplicationLoader::ApplicationLoader() {
 #ifdef SAMPLE_ALGORITHM_LIBRARY
@@ -95,3 +96,5 @@ bool ApplicationLoader::PilotConfiguration::load(DecodedStream *input) {
    register_var("pilot_delay_seconds", &m_delay_duration, false);
    return complete();
 }
+
+}  // namespace mitre::oss::taft

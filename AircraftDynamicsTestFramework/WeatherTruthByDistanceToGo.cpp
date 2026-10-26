@@ -14,11 +14,13 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/WeatherTruthByDistanceToGo.h"
 #include <string.h>
+
+namespace mitre::oss::taft {
 
 using std::cout;
 using std::endl;
@@ -141,3 +143,5 @@ void WeatherTruthByDistanceToGo::InterpolateWindMatrix(Units::Angle lat_in, Unit
 }
 
 std::shared_ptr<WeatherTruthByDistanceToGo> WeatherTruthByDistanceToGo::GetSharedPtr() const { return m_shared_ptr; }
+
+}  // namespace mitre::oss::taft

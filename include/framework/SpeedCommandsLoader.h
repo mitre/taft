@@ -27,7 +27,7 @@
 
 #include "framework/SpeedCommandsFromStaticData.h"
 
-namespace fmacm::loader {
+namespace mitre::oss::taft::loader {
 class SpeedCommandsLoader final : public Loadable {
   public:
    SpeedCommandsLoader() : m_loaded(false), m_file_path() {}
@@ -41,4 +41,4 @@ class SpeedCommandsLoader final : public Loadable {
    bool m_loaded;
    std::string m_file_path;
 };
-}  // namespace fmacm::loader
+}  // namespace mitre::oss::taft::loader

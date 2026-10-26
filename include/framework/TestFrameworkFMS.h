@@ -14,7 +14,7 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #pragma once
@@ -24,6 +24,8 @@
 #include "public/PrecalcConstraint.h"
 #include "public/PrecalcWaypoint.h"
 #include "public/HorizontalPath.h"
+
+namespace mitre::oss::taft {
 
 class TestFrameworkFMS {
   public:
@@ -64,3 +66,5 @@ class TestFrameworkFMS {
    double m_mach_at_waypoint[128];
    PrecalcConstraint m_constraints[128];
 };
+
+}  // namespace mitre::oss::taft

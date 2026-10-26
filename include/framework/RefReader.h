@@ -32,7 +32,7 @@
 
 #include "public/DataReader.h"
 
-namespace testvector {
+namespace mitre::oss::taft::testvector {
 
 class RefReader : public aaesim::open_source::DataReader {
   public:
@@ -46,4 +46,4 @@ class RefReader : public aaesim::open_source::DataReader {
    Units::SecondsTime m_time_to_fly;  // column 1
 };
 
-}  // namespace testvector
+}  // namespace mitre::oss::taft::testvector

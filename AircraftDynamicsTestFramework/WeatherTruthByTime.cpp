@@ -14,11 +14,13 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/WeatherTruthByTime.h"
 #include <string.h>
+
+namespace mitre::oss::taft {
 
 using std::cout;
 using std::endl;
@@ -148,3 +150,5 @@ void WeatherTruthByTime::InterpolateWindMatrix(Units::Angle lat_in, Units::Angle
 }
 
 std::shared_ptr<WeatherTruthByTime> WeatherTruthByTime::GetSharedPtr() const { return m_shared_ptr; }
+
+}  // namespace mitre::oss::taft

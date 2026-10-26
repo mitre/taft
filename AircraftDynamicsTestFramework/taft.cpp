@@ -39,9 +39,11 @@
 #include "public/ScenarioUtils.h"
 
 #define _MAX_PATH 260
-#ifndef FMACM_VERSION
-#define FMACM_VERSION "unknown"
+#ifndef TAFT_VERSION
+#define TAFT_VERSION "unknown"
 #endif
+
+namespace mitre::oss::taft {
 
 const std::vector<std::pair<std::string, std::shared_ptr<TestFrameworkScenario>>> LoadConfigurationFile(
       const std::string &filename);
@@ -52,15 +54,18 @@ void ProcessScenarioDescriptions(
 static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("main"));
 const std::string VERSION_FLAG("--version");
 
+}  // namespace mitre::oss::taft
+
 int main(int argc, char *argv[]) {
+   using namespace mitre::oss::taft;
    log4cplus::Initializer initializer;
    LoadLoggerProperties();
-   LOG4CPLUS_INFO(logger, "running " << FMACM_VERSION);
+   LOG4CPLUS_INFO(logger, "running " << TAFT_VERSION);
 
    if (argc == 2) {
       std::string arg1(argv[1]);
       if (arg1 == VERSION_FLAG) {
-         std::cout << "fmacm version " << FMACM_VERSION << std::endl;
+         std::cout << "TAFT version " << TAFT_VERSION << std::endl;
          return EXIT_SUCCESS;
       }
    } else {
@@ -88,6 +93,8 @@ int main(int argc, char *argv[]) {
 
    return EXIT_SUCCESS;
 }
+
+namespace mitre::oss::taft {
 
 const std::vector<std::pair<std::string, std::shared_ptr<TestFrameworkScenario>>> LoadConfigurationFile(
       const std::string &filename) {
@@ -151,3 +158,5 @@ void ProcessScenarioDescriptions(
          };
    std::for_each(scenarios.begin(), scenarios.end(), scenario_runner);
 }
+
+}  // namespace mitre::oss::taft

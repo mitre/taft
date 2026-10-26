@@ -34,7 +34,8 @@
 #include "utility/BoundedValue.h"
 #include "utility/CsvParser.h"
 
-using namespace fmacm;
+namespace mitre::oss::taft {
+
 using namespace aaesim::open_source;
 
 log4cplus::Logger GuidanceDataLoader::m_logger = log4cplus::Logger::getInstance("GuidanceDataLoader");
@@ -388,3 +389,5 @@ void GuidanceDataLoader::ComputeCourseColumnsInPlace(std::vector<HorizontalPath>
    }
    horizontal_path_sequence.back().m_path_course = (--(--horizontal_path_sequence.cend()))->m_path_course;
 }
+
+}  // namespace mitre::oss::taft

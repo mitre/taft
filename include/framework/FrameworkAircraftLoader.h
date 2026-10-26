@@ -31,7 +31,7 @@
 #include "public/FixedMassAircraftPerformance.h"
 #include "public/WeatherTruth.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class FrameworkAircraftLoader final : public LoggingLoadable {
   public:
    FrameworkAircraftLoader();
@@ -48,21 +48,21 @@ class FrameworkAircraftLoader final : public LoggingLoadable {
    std::string m_forewind_csv_file{};
    std::string m_env_csv_file{};
    std::string m_env_csv_data_index{};
-   fmacm::GuidanceDataLoader m_guidance_loader{};
-   fmacm::ApplicationLoader m_flightdeck_application_loader{};
+   GuidanceDataLoader m_guidance_loader{};
+   ApplicationLoader m_flightdeck_application_loader{};
    EarthModel::LocalPositionEnu m_initial_local_position{};
 
    std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> BuildAircraftPerformance(
          const std::string &bada_aircraft_code);
    std::shared_ptr<aaesim::open_source::ThreeDOFDynamics> BuildAircraftDynamics(
          std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &performance,
-         std::shared_ptr<fmacm::WeatherTruthFromStaticData> &true_weather,
-         std::shared_ptr<fmacm::GuidanceFromStaticData> &guidance,
+         std::shared_ptr<WeatherTruthFromStaticData> &true_weather,
+         std::shared_ptr<GuidanceFromStaticData> &guidance,
          const EarthModel::GeodeticPosition &initial_wgs84_position);
    std::shared_ptr<aaesim::open_source::AircraftControl> BuildAircraftControl(
          std::string control_method,
          std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &bada_calculator);
-   std::shared_ptr<fmacm::WeatherTruthFromStaticData> BuildTrueWeather(const std::string &env_csv_file,
+   std::shared_ptr<WeatherTruthFromStaticData> BuildTrueWeather(const std::string &env_csv_file,
                                                                        const std::string &env_csv_data_index,
                                                                        Units::Length initial_altitude);
    std::shared_ptr<aaesim::open_source::ADSBReceiver> BuildAdsbReceiver(std::string ttv_csv_file);
@@ -71,11 +71,11 @@ class FrameworkAircraftLoader final : public LoggingLoadable {
          Units::Length initial_altitude, const EarthModel::GeodeticPosition &wgs84_position);
    EarthModel::LocalPositionEnu ComputeInitialPositionOnPath(std::shared_ptr<GuidanceFromStaticData> &guidance);
    std::tuple<bool, EarthModel::LocalPositionEnu> IsDistanceAlongPathValid(
-         std::shared_ptr<fmacm::GuidanceFromStaticData> &guidance,
+         std::shared_ptr<GuidanceFromStaticData> &guidance,
          const Units::Length &target_distance_along_path) const;
    std::shared_ptr<aaesim::open_source::FlightDeckApplication> BuildFlightdeckApplication(
          std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &performance,
          std::shared_ptr<aaesim::open_source::ADSBReceiver> &receiver, const aaesim::open_source::AircraftState &state,
          const GuidanceFromStaticData::PlannedDescentParameters &guidance_descent_parameters);
 };
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

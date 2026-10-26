@@ -14,11 +14,13 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/AircraftIntentFromFile.h"
 #include "framework/HfpReader2020.h"
+
+namespace mitre::oss::taft {
 
 using std::string;
 
@@ -120,3 +122,5 @@ int AircraftIntentFromFile::LocalStringToInt(const string &s) {
 void AircraftIntentFromFile::update_xy_from_latlon() {
    // intentionally empty to prevent parent method from running
 }
+
+}  // namespace mitre::oss::taft

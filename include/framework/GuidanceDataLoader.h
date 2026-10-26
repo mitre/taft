@@ -33,7 +33,7 @@
 #include "public/TangentPlaneSequence.h"
 #include "public/Waypoint.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class GuidanceDataLoader final : public Loadable {
   public:
    GuidanceDataLoader()
@@ -170,4 +170,4 @@ inline void GuidanceDataLoader::DoDebugLogging(
    }
 }
 
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

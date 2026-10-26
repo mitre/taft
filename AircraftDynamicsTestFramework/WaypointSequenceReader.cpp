@@ -21,7 +21,8 @@
 
 #include <vector>
 
-using namespace fmacm;
+
+namespace mitre::oss::taft {
 
 std::vector<WaypointSequenceReader::WaypointSequenceRow> WaypointSequenceReader::ReadFile() {
    std::vector<WaypointSequenceRow> data;
@@ -51,3 +52,5 @@ std::vector<WaypointSequenceReader::WaypointSequenceRow> WaypointSequenceReader:
 
    return data;
 }
+
+}  // namespace mitre::oss::taft

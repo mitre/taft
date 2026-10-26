@@ -21,7 +21,7 @@
 
 #include "public/Wind.h"
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class WindInterpolator final : public Wind {
   public:
    struct WeatherDataPoint {
@@ -49,4 +49,4 @@ class WindInterpolator final : public Wind {
   private:
    WeatherDataPoint m_weather_data_point;
 };
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

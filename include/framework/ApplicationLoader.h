@@ -35,7 +35,7 @@
 #include "imalgs/IMTimeBasedAchieve.h"
 #endif
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class ApplicationLoader final : public Loadable {
   public:
    ApplicationLoader();
@@ -61,7 +61,7 @@ class ApplicationLoader final : public Loadable {
       Units::SecondsTime m_delay_duration;
    };
    bool m_loaded{false};
-   fmacm::loader::SpeedCommandsLoader m_im_speed_command_file{};
+   loader::SpeedCommandsLoader m_im_speed_command_file{};
    PilotConfiguration m_pilot_delay_configuration{};
 
 #ifdef SAMPLE_ALGORITHM_LIBRARY
@@ -69,4 +69,4 @@ class ApplicationLoader final : public Loadable {
    interval_management::open_source::IMDistBasedAchieve m_sample_algorithm_distance_goal;
 #endif
 };
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

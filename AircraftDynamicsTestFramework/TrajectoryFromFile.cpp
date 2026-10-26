@@ -14,7 +14,7 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/TrajectoryFromFile.h"
@@ -28,6 +28,8 @@
 #include "framework/HfpReader2020.h"
 #include "utility/CsvParser.h"
 #include "utility/UtilityConstants.h"
+
+namespace mitre::oss::taft {
 
 namespace constants = aaesim::open_source::constants;
 
@@ -322,3 +324,5 @@ void TrajectoryFromFile::ReadHorizontalTrajectoryFile() {
    m_decrementing_position_calculator =
          PositionCalculator(m_horizontal_trajectory, TrajectoryIndexProgressionDirection::DECREMENTING);
 }
+
+}  // namespace mitre::oss::taft

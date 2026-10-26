@@ -29,6 +29,8 @@
 #include "bada/Bada3Factory.h"
 #endif
 
+namespace mitre::oss::taft {
+
 log4cplus::Logger TestFrameworkScenario::m_logger = log4cplus::Logger::getInstance("TestFrameworkScenario");
 
 TestFrameworkScenario::TestFrameworkScenario() : Scenario(), m_aircraft_in_scenario() {
@@ -42,7 +44,7 @@ TestFrameworkScenario::TestFrameworkScenario() : Scenario(), m_aircraft_in_scena
 
 bool TestFrameworkScenario::load(DecodedStream *input) {
    std::string bada_data_path;
-   std::vector<fmacm::FrameworkAircraftLoader> aircraft_loaders;
+   std::vector<FrameworkAircraftLoader> aircraft_loaders;
 
    set_stream(input);
    register_var("bada_data_path", &bada_data_path, true);
@@ -55,12 +57,12 @@ bool TestFrameworkScenario::load(DecodedStream *input) {
 }
 
 void TestFrameworkScenario::PostLoad(const std::string &bada_data_path,
-                                     std::vector<fmacm::FrameworkAircraftLoader> &aircraft_loaders) {
+                                     std::vector<FrameworkAircraftLoader> &aircraft_loaders) {
 #ifdef MITRE_BADA3_LIBRARY
    aaesim::bada::Bada3Factory::SetBadaDataPath(bada_data_path, Atmosphere::AtmosphereType::BADA37);
 #endif
 
-   std::for_each(aircraft_loaders.begin(), aircraft_loaders.end(), [this](fmacm::FrameworkAircraftLoader loader) {
+   std::for_each(aircraft_loaders.begin(), aircraft_loaders.end(), [this](FrameworkAircraftLoader loader) {
       m_aircraft_in_scenario.push_back(loader.BuildAircraft());
    });
 }
@@ -71,20 +73,20 @@ void TestFrameworkScenario::SimulateAllIterations() {
    m_sample_algorithm_kinematic_writer->SetScenarioName(GetScenarioName());
 #endif
 
-   fmacm::AircraftStateWriter fmacm_state_writer;
-   fmacm_state_writer.SetScenarioName(GetScenarioName());
+   AircraftStateWriter taft_state_writer;
+   taft_state_writer.SetScenarioName(GetScenarioName());
 
-   LOG4CPLUS_INFO(m_logger, "Running FMACM scenario " << GetScenarioName());
+   LOG4CPLUS_INFO(m_logger, "Running TAFT scenario " << GetScenarioName());
    aaesim::open_source::SimulationTime time;
    bool scenario_complete = false;
    while (!scenario_complete) {
       scenario_complete = AdvanceAllAircraft(time);
       time.Increment();
    }
-   LOG4CPLUS_INFO(m_logger, "FMACM scenario complete; writing data files.");
+   LOG4CPLUS_INFO(m_logger, "TAFT scenario complete; writing data files.");
    std::for_each(m_aircraft_in_scenario.cbegin(), m_aircraft_in_scenario.cend(),
-                 [&fmacm_state_writer](const std::shared_ptr<TestFrameworkAircraft> &aircraft) {
-                    fmacm_state_writer.Gather(aircraft->GetAircraftStates());
+                 [&taft_state_writer](const std::shared_ptr<TestFrameworkAircraft> &aircraft) {
+                    taft_state_writer.Gather(aircraft->GetAircraftStates());
                  });
 
 #ifdef SAMPLE_ALGORITHM_LIBRARY
@@ -92,7 +94,7 @@ void TestFrameworkScenario::SimulateAllIterations() {
    m_sample_algorithm_kinematic_writer->Finish();
 #endif
 
-   fmacm_state_writer.Finish();
+   taft_state_writer.Finish();
 }
 
 bool TestFrameworkScenario::AdvanceAllAircraft(aaesim::open_source::SimulationTime &time) {
@@ -111,3 +113,5 @@ bool TestFrameworkScenario::AdvanceAllAircraft(aaesim::open_source::SimulationTi
    std::for_each(m_aircraft_in_scenario.begin(), m_aircraft_in_scenario.end(), advance_aircraft);
    return all_aircraft_complete;
 }
+
+}  // namespace mitre::oss::taft

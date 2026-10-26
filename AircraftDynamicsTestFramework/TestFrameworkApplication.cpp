@@ -14,7 +14,7 @@
 // For further information, please contact The MITRE Corporation, Contracts Management
 // Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2022-2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/TestFrameworkApplication.h"
@@ -22,6 +22,8 @@
 #include <iostream>
 
 #include "public/AircraftCalculations.h"
+
+namespace mitre::oss::taft {
 
 using namespace std;
 
@@ -65,3 +67,5 @@ bool TestFrameworkApplication::load(DecodedStream *input) {
 }
 
 bool TestFrameworkApplication::IsLoaded() { return m_loaded; }
+
+}  // namespace mitre::oss::taft

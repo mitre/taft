@@ -34,6 +34,8 @@
 #define ATMOSPHERE_IMPL NullAtmosphere
 #endif
 
+namespace mitre::oss::taft {
+
 class WeatherTruthByTime : public ATMOSPHERE_IMPL, public aaesim::open_source::WeatherTruth, public Wind {
   public:
    class Weather {
@@ -76,3 +78,5 @@ class WeatherTruthByTime : public ATMOSPHERE_IMPL, public aaesim::open_source::W
    std::map<Units::Time, Weather *> m_weather_by_time;
    Weather *m_weather;
 };
+
+}  // namespace mitre::oss::taft
