@@ -47,9 +47,9 @@
            },
        },
        {
-           "label": "make fmacm",
+           "label": "make taft",
            "type": "shell",
-           "command": "make FMACM -j",
+           "command": "make TAFT -j",
            "options": {
                "cwd": "${workspaceFolder}/build",
            },
@@ -119,9 +119,9 @@
            },
        },
        {
-           "label": "make fmacm test",
+           "label": "make taft test",
            "type": "shell",
-           "command": "make -j fmacm_test",
+           "command": "make -j taft_test",
            "options": {
                "cwd": "${workspaceFolder}/build",
            },

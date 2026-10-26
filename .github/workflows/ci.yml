@@ -30,8 +30,8 @@ jobs:
       - name: Configure and Build
         run: |
           cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --target FMACM -j
-          ./build/bin/FMACM --version
+          cmake --build build --target TAFT -j
+          ./build/bin/TAFT --version
 
  
 
