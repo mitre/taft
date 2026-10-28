@@ -28,13 +28,13 @@ This project contains content developed by The MITRE Corporation. If this code i
 
 ## Licensing
 
-[Apache 2.0](https://github.com/mitre/FMACM/blob/master/LICENSE)
+[Apache 2.0](https://github.com/mitre/taft/blob/main/LICENSE)
 
 ## Documentation
 
 This is an application. It models aircraft dynamics and controls for use in closed-loop testing of [RTCA](https://www.rtca.org) avionics requirements. But you should know a lot more before you try to use this.
 
-You should go deeper into [the documentation](https://mitre.github.io/FMACM/). :four_leaf_clover:
+You should go deeper into [the documentation](https://mitre.github.io/taft/). :four_leaf_clover:
 
 ---
 

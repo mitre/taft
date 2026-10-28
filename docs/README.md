@@ -1,4 +1,4 @@
-# FMACM
+# Test Automation Framework for TOAC (TAFT)
 
 > This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
 > Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
@@ -28,7 +28,7 @@ This project contains content developed by The MITRE Corporation. If this code i
 
 ## Licensing
 
-[Apache 2.0](https://github.com/mitre/FMACM/blob/master/LICENSE)
+[Apache 2.0](https://github.com/mitre/taft/blob/main/LICENSE)
 
 Any questions related to MITRE Open Source technologies may be emailed to [opensource@mitre.org](mailto:opensource@mitre.org).
 
@@ -41,17 +41,17 @@ Any questions related to MITRE Open Source technologies may be emailed to [opens
 
 ### Aircraft Performance
 
-This application needs aircraft performance data in order to propogate the dynamics models. To use this application, you must provide your own implementation by extending [FixedMassAircraftPerformance.h](https://github.com/mitre/FMACM/blob/master/include/public/FixedMassAircraftPerformance.h). We recommend doing this in a fully separate library and then linking that into this code base.
+This application needs aircraft performance data in order to propogate the dynamics models. To use this application, you must provide your own implementation by extending [FixedMassAircraftPerformance.h](https://github.com/mitre/FMACM/blob/master/include/public/FixedMassAircraftPerformance.h). We recommend doing this in a fully separate library and then linking that into this code base. [NOTE: TAFT is being refactored, this reference will be changing.]
 
 [EUROCONTROL's BADA v3](https://eurocontrol.int/services/bada) as an example of an aircraft performance data set and is what MITRE uses internally with this simulation. Our implementation cannot be publicly released due to licensing restrictions.
 
 ### Continuous Integration & Testing
 
-This code base is heavily tested internally. Publicly, we test using GitHub Actions. See the [ci.yml](https://github.com/mitre/FMACM/blob/master/.github/workflows/ci.yml) for details.
+This code base is heavily tested internally. Publicly, we test using GitHub Actions. See the [ci.yml](https://github.com/mitre/taft/blob/main/.github/workflows/ci.yml) for details.
 
 ### Compile
 
-No attempt has been made to ensure that this code will compile and run properly on all operating systems. Review the [ci.yml](https://github.com/mitre/FMACM/blob/master/.github/workflows/ci.yml) to explore what configurations we choose to test. We build like this:
+No attempt has been made to ensure that this code will compile and run properly on all operating systems. Review the [ci.yml](https://github.com/mitre/taft/blob/main/.github/workflows/ci.yml) to explore what configurations we choose to test. We build like this:
 
 ```bash
 cmake -G Ninja -S . -B build
@@ -73,7 +73,7 @@ cmake --build build --target run_tests
 
 Run from the terminal. Or compile the libraries here into a larger code base for richer access.
 
-The [main entry point](https://github.com/mitre/FMACM/blob/master/AircraftDynamicsTestFramework/fmacm.cpp) provides:
+The [main entry point](https://github.com/mitre/taft/blob/main/AircraftDynamicsTestFramework/taft.cpp) provides:
 
 - `--version`: report the build version;
 - a single positional argument is used to provide a configuration file.
@@ -83,7 +83,7 @@ Use them one at a time.
 
 To run a simulation, a configuration file must be provided as the single positional arguement.
 The file must be formatted as plain text and contain paths to each scenario that is to be run.
-An example is provided in [./Run_Files/](https://github.com/mitre/FMACM/blob/master/Run_Files/test-framework-configuration.txt).
+An example is provided in [./Run_Files/](https://github.com/mitre/taft/blob/main/Run_Files/test-framework-configuration.txt).
 
 The executable is then executed:
 
