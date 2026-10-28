@@ -1,18 +1,17 @@
 // ****************************************************************************
 // NOTICE
 //
-// This work was produced for the U.S. Government under Contract 693KA8-22-C-00001
-// and is subject to Federal Aviation Administration Acquisition Management System
-// Clause 3.5-13, Rights In Data-General, Alt. III and Alt. IV (Oct. 1996).
-//
-// The contents of this document reflect the views of the author and The MITRE
-// Corporation and do not necessarily reflect the views of the Federal Aviation
-// Administration (FAA) or the Department of Transportation (DOT). Neither the FAA
-// nor the DOT makes any warranty or guarantee, expressed or implied, concerning
-// the content or accuracy of these views.
-//
-// For further information, please contact The MITRE Corporation, Contracts Management
-// Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
+// This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
+// Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
+// Management System Clause 3.5-13, Rights In Data-General (Oct. 2014), Alt. III and Alt. IV (Jan.
+// 2009).
+
+// No other use other than that granted to the U. S. Government, or to those acting on behalf of
+// the U. S. Government, under that Clause is authorized without the express written permission of The
+// MITRE Corporation.
+
+// For further information, please contact The MITRE Corporation, Contracts
+// Management Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
 // (c) 2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
@@ -29,6 +28,8 @@
 #include "bada/Bada3Factory.h"
 #endif
 
+namespace mitre::oss::taft {
+
 log4cplus::Logger TestFrameworkScenario::m_logger = log4cplus::Logger::getInstance("TestFrameworkScenario");
 
 TestFrameworkScenario::TestFrameworkScenario() : Scenario(), m_aircraft_in_scenario() {
@@ -42,7 +43,7 @@ TestFrameworkScenario::TestFrameworkScenario() : Scenario(), m_aircraft_in_scena
 
 bool TestFrameworkScenario::load(DecodedStream *input) {
    std::string bada_data_path;
-   std::vector<fmacm::FrameworkAircraftLoader> aircraft_loaders;
+   std::vector<FrameworkAircraftLoader> aircraft_loaders;
 
    set_stream(input);
    register_var("bada_data_path", &bada_data_path, true);
@@ -55,12 +56,12 @@ bool TestFrameworkScenario::load(DecodedStream *input) {
 }
 
 void TestFrameworkScenario::PostLoad(const std::string &bada_data_path,
-                                     std::vector<fmacm::FrameworkAircraftLoader> &aircraft_loaders) {
+                                     std::vector<FrameworkAircraftLoader> &aircraft_loaders) {
 #ifdef MITRE_BADA3_LIBRARY
    aaesim::bada::Bada3Factory::SetBadaDataPath(bada_data_path, Atmosphere::AtmosphereType::BADA37);
 #endif
 
-   std::for_each(aircraft_loaders.begin(), aircraft_loaders.end(), [this](fmacm::FrameworkAircraftLoader loader) {
+   std::for_each(aircraft_loaders.begin(), aircraft_loaders.end(), [this](FrameworkAircraftLoader loader) {
       m_aircraft_in_scenario.push_back(loader.BuildAircraft());
    });
 }
@@ -71,20 +72,20 @@ void TestFrameworkScenario::SimulateAllIterations() {
    m_sample_algorithm_kinematic_writer->SetScenarioName(GetScenarioName());
 #endif
 
-   fmacm::AircraftStateWriter fmacm_state_writer;
-   fmacm_state_writer.SetScenarioName(GetScenarioName());
+   AircraftStateWriter taft_state_writer;
+   taft_state_writer.SetScenarioName(GetScenarioName());
 
-   LOG4CPLUS_INFO(m_logger, "Running FMACM scenario " << GetScenarioName());
+   LOG4CPLUS_INFO(m_logger, "Running TAFT scenario " << GetScenarioName());
    aaesim::open_source::SimulationTime time;
    bool scenario_complete = false;
    while (!scenario_complete) {
       scenario_complete = AdvanceAllAircraft(time);
       time.Increment();
    }
-   LOG4CPLUS_INFO(m_logger, "FMACM scenario complete; writing data files.");
+   LOG4CPLUS_INFO(m_logger, "TAFT scenario complete; writing data files.");
    std::for_each(m_aircraft_in_scenario.cbegin(), m_aircraft_in_scenario.cend(),
-                 [&fmacm_state_writer](const std::shared_ptr<TestFrameworkAircraft> &aircraft) {
-                    fmacm_state_writer.Gather(aircraft->GetAircraftStates());
+                 [&taft_state_writer](const std::shared_ptr<TestFrameworkAircraft> &aircraft) {
+                    taft_state_writer.Gather(aircraft->GetAircraftStates());
                  });
 
 #ifdef SAMPLE_ALGORITHM_LIBRARY
@@ -92,7 +93,7 @@ void TestFrameworkScenario::SimulateAllIterations() {
    m_sample_algorithm_kinematic_writer->Finish();
 #endif
 
-   fmacm_state_writer.Finish();
+   taft_state_writer.Finish();
 }
 
 bool TestFrameworkScenario::AdvanceAllAircraft(aaesim::open_source::SimulationTime &time) {
@@ -111,3 +112,5 @@ bool TestFrameworkScenario::AdvanceAllAircraft(aaesim::open_source::SimulationTi
    std::for_each(m_aircraft_in_scenario.begin(), m_aircraft_in_scenario.end(), advance_aircraft);
    return all_aircraft_complete;
 }
+
+}  // namespace mitre::oss::taft

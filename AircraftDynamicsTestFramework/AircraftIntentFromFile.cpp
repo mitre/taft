@@ -1,24 +1,25 @@
 // ****************************************************************************
 // NOTICE
 //
-// This work was produced for the U.S. Government under Contract 693KA8-22-C-00001
-// and is subject to Federal Aviation Administration Acquisition Management System
-// Clause 3.5-13, Rights In Data-General, Alt. III and Alt. IV (Oct. 1996).
+// This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
+// Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
+// Management System Clause 3.5-13, Rights In Data-General (Oct. 2014), Alt. III and Alt. IV (Jan.
+// 2009).
+
+// No other use other than that granted to the U. S. Government, or to those acting on behalf of
+// the U. S. Government, under that Clause is authorized without the express written permission of The
+// MITRE Corporation.
+
+// For further information, please contact The MITRE Corporation, Contracts
+// Management Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// The contents of this document reflect the views of the author and The MITRE
-// Corporation and do not necessarily reflect the views of the Federal Aviation
-// Administration (FAA) or the Department of Transportation (DOT). Neither the FAA
-// nor the DOT makes any warranty or guarantee, expressed or implied, concerning
-// the content or accuracy of these views.
-//
-// For further information, please contact The MITRE Corporation, Contracts Management
-// Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
-//
-// 2022 The MITRE Corporation. All Rights Reserved.
+// (c) 2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #include "framework/AircraftIntentFromFile.h"
 #include "framework/HfpReader2020.h"
+
+namespace mitre::oss::taft {
 
 using std::string;
 
@@ -42,7 +43,7 @@ bool AircraftIntentFromFile::load(DecodedStream *input) {
 }
 
 void AircraftIntentFromFile::PopulateWaypointsFromCsv(const std::string &csv_file) {
-   testvector::HfpReader2020 hfp_reader(csv_file, 1);
+   HfpReader2020 hfp_reader(csv_file, 1);
 
    Units::MetersLength x_waypoint_location[128];
    Units::MetersLength y_waypoint_location[128];
@@ -120,3 +121,5 @@ int AircraftIntentFromFile::LocalStringToInt(const string &s) {
 void AircraftIntentFromFile::update_xy_from_latlon() {
    // intentionally empty to prevent parent method from running
 }
+
+}  // namespace mitre::oss::taft

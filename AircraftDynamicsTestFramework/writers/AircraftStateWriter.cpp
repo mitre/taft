@@ -1,18 +1,17 @@
 // ****************************************************************************
 // NOTICE
 //
-// This work was produced for the U.S. Government under Contract 693KA8-22-C-00001
-// and is subject to Federal Aviation Administration Acquisition Management System
-// Clause 3.5-13, Rights In Data-General, Alt. III and Alt. IV (Oct. 1996).
-//
-// The contents of this document reflect the views of the author and The MITRE
-// Corporation and do not necessarily reflect the views of the Federal Aviation
-// Administration (FAA) or the Department of Transportation (DOT). Neither the FAA
-// nor the DOT makes any warranty or guarantee, expressed or implied, concerning
-// the content or accuracy of these views.
-//
-// For further information, please contact The MITRE Corporation, Contracts Management
-// Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
+// This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
+// Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
+// Management System Clause 3.5-13, Rights In Data-General (Oct. 2014), Alt. III and Alt. IV (Jan.
+// 2009).
+
+// No other use other than that granted to the U. S. Government, or to those acting on behalf of
+// the U. S. Government, under that Clause is authorized without the express written permission of The
+// MITRE Corporation.
+
+// For further information, please contact The MITRE Corporation, Contracts
+// Management Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
 // (c) 2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
@@ -22,11 +21,13 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> fmacm::AircraftStateWriter::COLUMN_NAMES = {
+namespace mitre::oss::taft {
+
+std::vector<std::string> AircraftStateWriter::COLUMN_NAMES = {
       "Time[sec]", "V(ias)[m/s]", "V(tas)[m/s]", "vRate[m/s]",    "x[m]",
       "y[m]",      "h[m]",        "gs[mps]",     "latitude[deg]", "longitude[deg]"};
 
-void fmacm::AircraftStateWriter::Finish() {
+void AircraftStateWriter::Finish() {
    if (m_data_to_write.empty()) {
       return;
    }
@@ -64,7 +65,7 @@ void fmacm::AircraftStateWriter::Finish() {
    m_data_to_write.clear();
 }
 
-void fmacm::AircraftStateWriter::Gather(std::vector<aaesim::open_source::AircraftState> aircraft_states) {
+void AircraftStateWriter::Gather(std::vector<aaesim::open_source::AircraftState> aircraft_states) {
    auto data_gatherer = [this](const aaesim::open_source::AircraftState &state) {
       DataToWrite data;
       data.altitude_msl = state.GetAltitudeMsl();
@@ -81,3 +82,5 @@ void fmacm::AircraftStateWriter::Gather(std::vector<aaesim::open_source::Aircraf
    };
    std::for_each(aircraft_states.cbegin(), aircraft_states.cend(), data_gatherer);
 }
+
+}  // namespace mitre::oss::taft

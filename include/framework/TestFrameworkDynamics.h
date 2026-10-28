@@ -1,18 +1,19 @@
 // ****************************************************************************
 // NOTICE
 //
-// This is the copyright work of The MITRE Corporation, and was produced
-// for the U. S. Government under Contract Number DTFAWA-10-C-00080, and
-// is subject to Federal Aviation Administration Acquisition Management
-// System Clause 3.5-13, Rights In Data-General, Alt. III and Alt. IV
-// (Oct. 1996).  No other use other than that granted to the U. S.
-// Government, or to those acting on behalf of the U. S. Government,
-// under that Clause is authorized without the express written
-// permission of The MITRE Corporation. For further information, please
-// contact The MITRE Corporation, Contracts Office, 7515 Colshire Drive,
-// McLean, VA  22102-7539, (703) 983-6000. 
+// This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
+// Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
+// Management System Clause 3.5-13, Rights In Data-General (Oct. 2014), Alt. III and Alt. IV (Jan.
+// 2009).
+
+// No other use other than that granted to the U. S. Government, or to those acting on behalf of
+// the U. S. Government, under that Clause is authorized without the express written permission of The
+// MITRE Corporation.
+
+// For further information, please contact The MITRE Corporation, Contracts
+// Management Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
-// Copyright 2018 The MITRE Corporation. All Rights Reserved.
+// (c) 2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
 #pragma once
@@ -28,6 +29,8 @@
 #include "public/WeatherTruth.h"
 
 // State in State out replacement for AircraftEOM aircraft dynamics model
+namespace mitre::oss::taft {
+
 class TestFrameworkDynamics : public Loadable
 {
 public:
@@ -205,3 +208,5 @@ private:
 
    Units::Speed m_wind_velocity_x, m_wind_velocity_y;  // True wind direction values computed by dynamics and speed_on_pitch_control_dynamics (m/s).
 };
+
+}  // namespace mitre::oss::taft

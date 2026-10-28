@@ -1,18 +1,17 @@
 // ****************************************************************************
 // NOTICE
 //
-// This work was produced for the U.S. Government under Contract 693KA8-22-C-00001
-// and is subject to Federal Aviation Administration Acquisition Management System
-// Clause 3.5-13, Rights In Data-General, Alt. III and Alt. IV (Oct. 1996).
-//
-// The contents of this document reflect the views of the author and The MITRE
-// Corporation and do not necessarily reflect the views of the Federal Aviation
-// Administration (FAA) or the Department of Transportation (DOT). Neither the FAA
-// nor the DOT makes any warranty or guarantee, expressed or implied, concerning
-// the content or accuracy of these views.
-//
-// For further information, please contact The MITRE Corporation, Contracts Management
-// Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
+// This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
+// Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
+// Management System Clause 3.5-13, Rights In Data-General (Oct. 2014), Alt. III and Alt. IV (Jan.
+// 2009).
+
+// No other use other than that granted to the U. S. Government, or to those acting on behalf of
+// the U. S. Government, under that Clause is authorized without the express written permission of The
+// MITRE Corporation.
+
+// For further information, please contact The MITRE Corporation, Contracts
+// Management Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
 //
 // (c) 2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
@@ -39,7 +38,7 @@
 #define ATMOSPHERE_IMPL USStandardAtmosphere1976
 #endif
 
-namespace fmacm {
+namespace mitre::oss::taft {
 class WeatherTruthFromStaticData : public aaesim::open_source::WeatherTruth {
   public:
    enum DataIndexParameter {
@@ -88,17 +87,17 @@ class WeatherTruthFromStaticData : public aaesim::open_source::WeatherTruth {
 
    void InitializeWithZeros();
    void LoadEnvFile(const std::string &env_csv_file);
-   std::map<Units::Time, fmacm::WindInterpolator::WeatherDataPoint> m_weather_data_points_by_time;
-   std::map<Units::Length, fmacm::WindInterpolator::WeatherDataPoint> m_weather_data_points_by_dtg;
-   fmacm::WindInterpolator::WeatherDataPoint m_weather_data_point;
-   std::shared_ptr<fmacm::WindInterpolator> m_wind_interpolator;
+   std::map<Units::Time, WindInterpolator::WeatherDataPoint> m_weather_data_points_by_time;
+   std::map<Units::Length, WindInterpolator::WeatherDataPoint> m_weather_data_points_by_dtg;
+   WindInterpolator::WeatherDataPoint m_weather_data_point;
+   std::shared_ptr<WindInterpolator> m_wind_interpolator;
    DataIndexParameter m_data_index;
 };
 
 inline void WeatherTruthFromStaticData::InitializeWithZeros() {
    m_data_index = DataIndexParameter::SIMULATION_TIME;
    const auto zero_offset_atmosphere = ATMOSPHERE_IMPL(Units::zero());
-   fmacm::WindInterpolator::WeatherDataPoint data_point;
+   WindInterpolator::WeatherDataPoint data_point;
    data_point.temperature =
          Units::AbsKelvinTemperature(zero_offset_atmosphere.GetTemperature(Units::ZERO_LENGTH).value());
    m_weather_data_points_by_dtg[Units::ZERO_LENGTH] = data_point;
@@ -114,4 +113,4 @@ inline WeatherTruthFromStaticData WeatherTruthFromStaticData::CreateZeroTruthWin
    zero.InitializeWithZeros();
    return zero;
 }
-}  // namespace fmacm
+}  // namespace mitre::oss::taft

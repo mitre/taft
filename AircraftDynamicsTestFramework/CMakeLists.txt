@@ -32,40 +32,40 @@ set(SOURCE_FILES
         WindInterpolator.cpp
 )
 
-set(FMACM_BADA_TARGET "" CACHE STRING "Optional BADA implementation target")
-set(FMACM_FIM_SAMPLE_ALGORITHM_TARGET "" CACHE STRING "Optional FIM sample algorithm target")
+set(TAFT_BADA_TARGET "" CACHE STRING "Optional BADA implementation target")
+set(TAFT_FIM_SAMPLE_ALGORITHM_TARGET "" CACHE STRING "Optional FIM sample algorithm target")
 
 # OPTIONAL Libraries ------
 # These optional local include files can define the legacy BADA_LIBRARY and
-# SAMPLE_ALGORITHM_LIBRARY variables. Prefer the FMACM_*_TARGET cache hooks
+# SAMPLE_ALGORITHM_LIBRARY variables. Prefer the TAFT_*_TARGET cache hooks
 # for downstream composition.
 include(bada_library.cmake OPTIONAL) 
 include(sample_algorithm_library.cmake OPTIONAL) 
-if("${FMACM_BADA_TARGET}" STREQUAL "" AND DEFINED BADA_LIBRARY)
-   set(FMACM_BADA_TARGET "${BADA_LIBRARY}")
+if("${TAFT_BADA_TARGET}" STREQUAL "" AND DEFINED BADA_LIBRARY)
+   set(TAFT_BADA_TARGET "${BADA_LIBRARY}")
 endif()
-if("${FMACM_FIM_SAMPLE_ALGORITHM_TARGET}" STREQUAL "" AND DEFINED SAMPLE_ALGORITHM_LIBRARY)
-   set(FMACM_FIM_SAMPLE_ALGORITHM_TARGET "${SAMPLE_ALGORITHM_LIBRARY}")
+if("${TAFT_FIM_SAMPLE_ALGORITHM_TARGET}" STREQUAL "" AND DEFINED SAMPLE_ALGORITHM_LIBRARY)
+   set(TAFT_FIM_SAMPLE_ALGORITHM_TARGET "${SAMPLE_ALGORITHM_LIBRARY}")
 endif()
 # ------
 
-add_library(framework STATIC ${SOURCE_FILES} ${DATA_READER_FILES} ${DATA_LOADER_FILES} ${DATA_WRITER_FILES})
-add_library(mitre::oss::fmacm_framework ALIAS framework)
-set_target_properties(framework PROPERTIES
+add_library(taft_framework STATIC ${SOURCE_FILES} ${DATA_READER_FILES} ${DATA_LOADER_FILES} ${DATA_WRITER_FILES})
+add_library(mitre::oss::taft::framework ALIAS taft_framework)
+set_target_properties(taft_framework PROPERTIES
    ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
 )
-target_include_directories(framework PUBLIC
+target_include_directories(taft_framework PUBLIC
         ${aaesim_INCLUDE_DIRS})
-target_link_libraries(framework
+target_link_libraries(taft_framework
    PUBLIC
    mitre::fsloader
    log4cplus::log4cplus
    mitre::oss::simcore)
-if (FMACM_BADA_TARGET)
-   target_link_libraries(framework PUBLIC ${FMACM_BADA_TARGET})
-   target_compile_definitions(framework PUBLIC MITRE_BADA3_LIBRARY)
+if (TAFT_BADA_TARGET)
+   target_link_libraries(taft_framework PUBLIC ${TAFT_BADA_TARGET})
+   target_compile_definitions(taft_framework PUBLIC MITRE_BADA3_LIBRARY)
 endif()
-if (FMACM_FIM_SAMPLE_ALGORITHM_TARGET)
-   target_link_libraries(framework PUBLIC ${FMACM_FIM_SAMPLE_ALGORITHM_TARGET})
-   target_compile_definitions(framework PUBLIC SAMPLE_ALGORITHM_LIBRARY)
+if (TAFT_FIM_SAMPLE_ALGORITHM_TARGET)
+   target_link_libraries(taft_framework PUBLIC ${TAFT_FIM_SAMPLE_ALGORITHM_TARGET})
+   target_compile_definitions(taft_framework PUBLIC SAMPLE_ALGORITHM_LIBRARY)
 endif()

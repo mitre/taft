@@ -14,19 +14,19 @@ debug:
 	@echo "Building in debug mode..."
 	cmake $(CMAKE_GENERATOR) -S . -B $(BUILD_PATH) -DCMAKE_COLOR_DIAGNOSTICS=ON -DCMAKE_BUILD_TYPE=Debug -DUSE_CCACHE=YES
 	cmake --build $(BUILD_PATH) --target clean
-	cmake --build $(BUILD_PATH) --target FMACM -j
+	cmake --build $(BUILD_PATH) --target TAFT -j
 
 reldebug: 
 	@echo "Building in release with debug info mode..."
 	cmake $(CMAKE_GENERATOR) -S . -B $(BUILD_PATH) -DCMAKE_COLOR_DIAGNOSTICS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_CCACHE=YES
 	cmake --build $(BUILD_PATH) --target clean
-	cmake --build $(BUILD_PATH) --target FMACM -j
+	cmake --build $(BUILD_PATH) --target TAFT -j
 
 release: 
 	@echo "Building in release mode..."
 	cmake $(CMAKE_GENERATOR) -S . -B $(BUILD_PATH) -DCMAKE_COLOR_DIAGNOSTICS=ON -DCMAKE_BUILD_TYPE=Release -DUSE_CCACHE=YES
 	cmake --build $(BUILD_PATH) --target clean
-	cmake --build $(BUILD_PATH) --target FMACM -j
+	cmake --build $(BUILD_PATH) --target TAFT -j
 
 nuke:
 	@echo "Removing build directory..."
