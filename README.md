@@ -1,4 +1,4 @@
-# MOPS Aircraft & Control Model
+# Test Automation Framework for TOAC (TAFT)
 
 > This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
 > Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
