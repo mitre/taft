@@ -87,9 +87,9 @@ class GuidanceDataLoader final : public Loadable {
    std::pair<std::shared_ptr<TangentPlaneSequence>, std::vector<aaesim::open_source::HorizontalPath>>
          ProcessWaypointSequenceData() const;
    std::vector<aaesim::open_source::HorizontalPath> BuildHorizontalPathUsingAllColumns(
-         testvector::HfpReader2020 &hfp_reader) const;
+         HfpReader2020 &hfp_reader) const;
    std::vector<aaesim::open_source::HorizontalPath> BuildHorizontalPathComputeEuclideanComponents(
-         testvector::HfpReader2020 &hfp_reader, std::shared_ptr<TangentPlaneSequence> &tangent_plane_sequence) const;
+         HfpReader2020 &hfp_reader, std::shared_ptr<TangentPlaneSequence> &tangent_plane_sequence) const;
    std::shared_ptr<TangentPlaneSequence> BuildTangentPlaneFromFileData() const;
    std::shared_ptr<TangentPlaneSequence> BuildTangentPlane(const std::list<Waypoint> &ordered_waypoints) const;
    void ComputeCourseColumnsInPlace(std::vector<aaesim::open_source::HorizontalPath> &horizontal_path) const;

@@ -33,7 +33,7 @@
 #include "public/DataReader.h"
 #include "public/HorizontalPath.h"
 
-namespace mitre::oss::taft::testvector {
+namespace mitre::oss::taft {
 
 class HfpReader2020 final : public aaesim::open_source::DataReader {
   public:
@@ -95,4 +95,4 @@ class HfpReader2020 final : public aaesim::open_source::DataReader {
    int m_turn_center_latitude_column;
    int m_turn_center_longitude_column;
 };
-}  // namespace mitre::oss::taft::testvector
+}  // namespace mitre::oss::taft

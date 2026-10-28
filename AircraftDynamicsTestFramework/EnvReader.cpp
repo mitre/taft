@@ -33,7 +33,7 @@
 
 #include "utility/UtilityConstants.h"
 
-namespace mitre::oss::taft::testvector {
+namespace mitre::oss::taft {
 
 const size_t EnvReader::EXPECTED_ENV_COLUMN_COUNT(7);
 
@@ -64,4 +64,4 @@ bool EnvReader::Advance() {
 
 const Units::SecondsTime EnvReader::GetTime() const { return m_time; }
 
-}  // namespace mitre::oss::taft::testvector
+}  // namespace mitre::oss::taft

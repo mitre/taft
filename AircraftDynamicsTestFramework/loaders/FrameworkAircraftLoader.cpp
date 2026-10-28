@@ -286,7 +286,7 @@ std::shared_ptr<aaesim::open_source::FlightDeckApplication> FrameworkAircraftLoa
          aaesim::open_source::WeatherPrediction::CreateZeroWindPrediction(std::make_unique<USStandardAtmosphere1976>());
 #endif
    if (!m_forewind_csv_file.empty()) {
-      testvector::ForeWindReader forecast_wind_reader{m_forewind_csv_file, 1};
+      ForeWindReader forecast_wind_reader{m_forewind_csv_file, 1};
       forecast_wind_reader.ReadWind(weather_prediction);
    }
    aaesim::open_source::OwnshipFmsPredictionParameters fms_parameters;

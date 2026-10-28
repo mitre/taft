@@ -20,7 +20,7 @@
 
 #include <string>
 
-namespace mitre::oss::taft::testvector {
+namespace mitre::oss::taft {
 
 ForeWindReader::ForeWindReader(const std::string &file_name, int header_lines)
    : DataReader(file_name, header_lines, 0) {}
@@ -51,4 +51,4 @@ bool ForeWindReader::ReadWind(aaesim::open_source::WeatherPrediction &weather_pr
    return true;
 }
 
-}  // namespace mitre::oss::taft::testvector
+}  // namespace mitre::oss::taft

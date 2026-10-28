@@ -30,7 +30,7 @@
 
 using namespace std;
 
-namespace mitre::oss::taft::testvector {
+namespace mitre::oss::taft {
 
 HfpReaderPre2020::HfpReaderPre2020(const std::string &file_name, int header_lines) : DataReader(file_name, 0, 0) {
    SetColumnIndexesFromHeader(header_lines);
@@ -126,4 +126,4 @@ Units::Angle HfpReaderPre2020::GetTurnCenterLongitude() {
    return Units::DegreesAngle(GetDouble(m_turn_center_longitude_column));
 }
 
-}  // namespace mitre::oss::taft::testvector
+}  // namespace mitre::oss::taft

@@ -43,7 +43,7 @@ bool AircraftIntentFromFile::load(DecodedStream *input) {
 }
 
 void AircraftIntentFromFile::PopulateWaypointsFromCsv(const std::string &csv_file) {
-   testvector::HfpReader2020 hfp_reader(csv_file, 1);
+   HfpReader2020 hfp_reader(csv_file, 1);
 
    Units::MetersLength x_waypoint_location[128];
    Units::MetersLength y_waypoint_location[128];

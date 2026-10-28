@@ -292,7 +292,7 @@ void TrajectoryFromFile::ReadVerticalTrajectoryFile() {
 }
 
 void TrajectoryFromFile::ReadHorizontalTrajectoryFile() {
-   testvector::HfpReader2020 hfp_reader(m_horizontal_trajectory_file, 1);
+   HfpReader2020 hfp_reader(m_horizontal_trajectory_file, 1);
 
    while (hfp_reader.Advance()) {
       HorizontalPath horizontal_path_segment;

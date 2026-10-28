@@ -20,7 +20,7 @@
 
 #include <string>
 
-namespace mitre::oss::taft::testvector {
+namespace mitre::oss::taft {
 
 RefReader::RefReader(const std::string &file_name, int header_lines, size_t expected_columns)
    : DataReader(file_name, header_lines, expected_columns) {}
@@ -43,4 +43,4 @@ bool RefReader::Advance() {
 
 const Units::SecondsTime RefReader::GetTimeToFly() const { return m_time_to_fly; }
 
-}  // namespace mitre::oss::taft::testvector
+}  // namespace mitre::oss::taft

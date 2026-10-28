@@ -79,7 +79,7 @@ std::shared_ptr<GuidanceFromStaticData> GuidanceDataLoader::BuildGuidanceCalcula
 std::pair<std::shared_ptr<TangentPlaneSequence>, std::vector<HorizontalPath>> GuidanceDataLoader::ProcessHfpData()
       const {
    auto tangent_plane_sequence = BuildTangentPlaneFromFileData();
-   testvector::HfpReader2020 hfp_reader(m_hfp_filename, 1);
+   HfpReader2020 hfp_reader(m_hfp_filename, 1);
    std::vector<HorizontalPath> hpath;
    if (m_compute_xy)
       hpath = BuildHorizontalPathComputeEuclideanComponents(hfp_reader, tangent_plane_sequence);
@@ -201,7 +201,7 @@ std::pair<std::shared_ptr<TangentPlaneSequence>, std::vector<HorizontalPath>>
 }
 
 std::shared_ptr<TangentPlaneSequence> GuidanceDataLoader::BuildTangentPlaneFromFileData() const {
-   testvector::HfpReader2020 hfp_reader(m_hfp_filename, 1);
+   HfpReader2020 hfp_reader(m_hfp_filename, 1);
    std::list<Waypoint> ordered_lat_long_points;
    while (hfp_reader.Advance()) {
       Waypoint wp(hfp_reader.GetString(HorizontalFields::IX), hfp_reader.GetLatitude(), hfp_reader.GetLongitude());
@@ -275,7 +275,7 @@ GuidanceFromStaticData::VerticalData GuidanceDataLoader::BuildVerticalGuidanceDa
 }
 
 std::vector<HorizontalPath> GuidanceDataLoader::BuildHorizontalPathUsingAllColumns(
-      testvector::HfpReader2020 &hfp_reader) const {
+      HfpReader2020 &hfp_reader) const {
    std::vector<HorizontalPath> horizontal_path_sequence;
 
    while (hfp_reader.Advance()) {
@@ -308,7 +308,7 @@ std::vector<HorizontalPath> GuidanceDataLoader::BuildHorizontalPathUsingAllColum
 }
 
 std::vector<HorizontalPath> GuidanceDataLoader::BuildHorizontalPathComputeEuclideanComponents(
-      testvector::HfpReader2020 &hfp_reader, std::shared_ptr<TangentPlaneSequence> &tangent_plane_sequence) const {
+      HfpReader2020 &hfp_reader, std::shared_ptr<TangentPlaneSequence> &tangent_plane_sequence) const {
    std::vector<HorizontalPath> horizontal_path_sequence;
    while (hfp_reader.Advance()) {
       HorizontalPath horizontal_path_segment;

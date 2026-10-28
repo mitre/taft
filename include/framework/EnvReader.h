@@ -31,7 +31,7 @@
 
 #include "public/DataReader.h"
 
-namespace mitre::oss::taft::testvector {
+namespace mitre::oss::taft {
 
 class EnvReader final : public aaesim::open_source::DataReader {
   public:
@@ -47,4 +47,4 @@ class EnvReader final : public aaesim::open_source::DataReader {
    Units::SecondsTime m_time;  // column 1
 };
 
-}  // namespace mitre::oss::taft::testvector
+}  // namespace mitre::oss::taft
