@@ -1,4 +1,9 @@
 .DS_Store
+# Local documentation output
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
 build
 *.cbp
 *cppcheck*
