@@ -38,6 +38,9 @@ if(NOT TAFT_BUILD_TESTING)
     message(STATUS "${PROJECT_NAME}: skipping test targets")
 endif()
 
+include(${PROJECT_SOURCE_DIR}/.cmake/ReleaseVersion.cmake)
+message("-- Generating build for ${PROJECT_NAME} version ${TAFT_VERSION}")
+
 # Get CPM
 include(${PROJECT_SOURCE_DIR}/.cmake/get_cpm.cmake)
 
@@ -49,9 +52,6 @@ CPMAddPackage(
   GITHUB_REPOSITORY TheLartians/Ccache.cmake
   VERSION 1.2.5
 )
-
-set(TAFT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
-message("-- Generating build for ${PROJECT_NAME} version ${TAFT_VERSION}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-unused-function -Wno-sign-compare -O0 -g")
@@ -85,4 +85,8 @@ set (UNITTEST_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/unittest)
 include(${FRAMEWORK_DIR}/framework.cmake OPTIONAL)
 if(TAFT_BUILD_TESTING)
     include(${UNITTEST_DIR}/unittest.cmake OPTIONAL)
+endif()
+
+if(TAFT_IS_TOP_LEVEL AND TAFT_BUILD_EXECUTABLE)
+    include(${PROJECT_SOURCE_DIR}/.cmake/Packaging.cmake)
 endif()
