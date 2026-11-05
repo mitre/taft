@@ -1,4 +1,7 @@
+title: TAFT
+description: Test Automation Framework for TOAC — aircraft-dynamics scenarios and CSV results for avionics research.
+url: https://mitre.github.io
+baseurl: /taft
+repository: mitre/taft
 theme: jekyll-theme-minimal
-#remote_theme: pages-themes/minimal@v0.2.0
-#plugins:
-#- jekyll-remote-theme # add this line to the plugins list if you already have one
+show_downloads: false

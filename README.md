@@ -16,26 +16,24 @@
 >
 > Approved for Public Release; Distribution Unlimited. 26-2350
 
-This project contains content developed by The MITRE Corporation. If this code is used in a deployment or embedded within another project, it is requested that you send an email to [opensource@mitre.org](mailto:opensource@mitre.org) in order to let us know where this software is being used.
+TAFT is a C++ framework for running aircraft-dynamics scenarios and collecting
+CSV results for TOAC and avionics research. It was initialized from a source
+copy of [FMACM](https://github.com/mitre/FMACM).
 
-![Apache 2.0](https://img.shields.io/badge/license-Apache%20License%202.0-blue?style=for-the-badge)
-
-![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white)
-![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
-
-![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
-![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
-
-## Licensing
-
-[Apache 2.0](https://github.com/mitre/taft/blob/main/LICENSE)
+The public source supports building and unit testing without licensed aircraft
+performance data. Running a simulation requires an external aircraft-performance
+provider and its data.
 
 ## Documentation
 
-This is an application. It models aircraft dynamics and controls for use in closed-loop testing of [RTCA](https://www.rtca.org) avionics requirements. But you should know a lot more before you try to use this.
+Read the [TAFT guide](https://mitre.github.io/taft/) for prerequisites, building,
+scenario inputs, provider integration, CI, and releases. The same guide is
+available as [repository Markdown](docs/README.md).
 
-You should go deeper into [the documentation](https://mitre.github.io/taft/). :four_leaf_clover:
+Download published packages from [GitHub Releases](https://github.com/mitre/taft/releases).
 
----
+## License and contact
 
-Happy Simulating!
+TAFT is distributed under the [Apache License 2.0](LICENSE).
+If you use this software in a deployment or embed it in another project, MITRE
+requests that you notify [opensource@mitre.org](mailto:opensource@mitre.org).

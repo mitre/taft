@@ -16,6 +16,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build GitHub Pages documentation
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+      - name: Check the documentation homepage
+        run: test -s _site/index.html
+      - name: Upload documentation preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-preview
+          path: _site/
+          if-no-files-found: error
+
   build-and-test:
     uses: ./.github/workflows/build.yml
 
@@ -23,9 +44,12 @@ jobs:
     name: CI required
     runs-on: ubuntu-latest
     if: always()
-    needs: build-and-test
+    needs: [docs, build-and-test]
     steps:
-      - name: Require every build, test, and package check to pass
+      - name: Require documentation, builds, tests, and package checks to pass
         env:
+          DOCS_RESULT: ${{ needs.docs.result }}
           BUILD_RESULT: ${{ needs.build-and-test.result }}
-        run: test "$BUILD_RESULT" = success
+        run: |
+          test "$DOCS_RESULT" = success
+          test "$BUILD_RESULT" = success
