@@ -2,61 +2,30 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-latest
-            container: ''
-            install: |
-              brew update
-          - os: ubuntu-latest
-            container: rockylinux:9
-            install: |
-              dnf -y install gcc gcc-c++ make cmake git
-    steps:
-      - uses: actions/checkout@v4
+  build-and-test:
+    uses: ./.github/workflows/build.yml
 
-      - name: Install dependencies
-        run: ${{ matrix.install }}
-
-      - name: Configure and Build
-        run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --target TAFT -j
-          ./build/bin/TAFT --version
-
- 
-
-  run_all_tests:
+  required:
+    name: CI required
     runs-on: ubuntu-latest
-    container:
-      image: rockylinux:9
+    if: always()
+    needs: build-and-test
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          dnf -y install gcc gcc-c++ make cmake git
-
-      - name: Build project
-        run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release
-
-      - name: Run tests
-        run: |
-          cmake --build build --target run_tests -j
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: build/unittest/*results.xml
+      - name: Require every build, test, and package check to pass
+        env:
+          BUILD_RESULT: ${{ needs.build-and-test.result }}
+        run: test "$BUILD_RESULT" = success

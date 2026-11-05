@@ -1,0 +1,113 @@
+name: Build and package validation
+
+on:
+  workflow_call:
+    inputs:
+      release-tag:
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.environment }})
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: ubuntu-latest
+            runner: ubuntu-latest
+            container: ''
+            platform: ubuntu
+          # GitHub has no rocky-latest runner, and Rocky has no :latest image.
+          # The :9 tag follows the latest minor release of Rocky Linux 9.
+          - environment: rocky-latest
+            runner: ubuntu-latest
+            container: rockylinux:9
+            platform: rocky9
+          - environment: macos-latest
+            runner: macos-latest
+            container: ''
+            platform: macos
+    defaults:
+      run:
+        shell: bash
+    env:
+      CPM_SOURCE_CACHE: ${{ github.workspace }}/.cpm-cache
+      RELEASE_TAG: ${{ inputs.release-tag }}
+    steps:
+      # Install git before checkout so the container gets a real Git checkout.
+      - name: Install Ubuntu toolchain
+        if: matrix.environment == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential git python3-venv
+
+      - name: Install Rocky Linux toolchain
+        if: matrix.environment == 'rocky-latest'
+        run: dnf install -y gcc gcc-c++ make git python3 python3-pip tar gzip
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install CMake
+        run: |
+          python3 -m venv "$RUNNER_TEMP/taft-tools"
+          "$RUNNER_TEMP/taft-tools/bin/python" -m pip install cmake==3.31.10
+          echo "$RUNNER_TEMP/taft-tools/bin" >> "$GITHUB_PATH"
+
+      - name: Cache dependency sources
+        uses: actions/cache@v4
+        with:
+          path: .cpm-cache
+          key: cpm-${{ matrix.environment }}-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '.cmake/get_cpm.cmake') }}
+          restore-keys: cpm-${{ matrix.environment }}-${{ runner.arch }}-
+
+      - name: Configure
+        env:
+          PACKAGE_PLATFORM: ${{ matrix.platform }}
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF -DTAFT_BUILD_TESTING=ON \
+            -DTAFT_RELEASE_TAG="$RELEASE_TAG" \
+            -DTAFT_PACKAGE_PLATFORM="$PACKAGE_PLATFORM"
+
+      - name: Build and run unit tests
+        run: cmake --build build --target TAFT run_tests --parallel 2
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.environment }}
+          path: build/unittest/*results.xml
+          if-no-files-found: warn
+
+      - name: Build and check release package
+        run: |
+          expected_version=$(./build/bin/TAFT --version | tail -n 1)
+          cpack --config build/CPackConfig.cmake -B dist
+          mkdir -p "$RUNNER_TEMP/taft-unpacked"
+          tar -xzf dist/taft-*.tar.gz -C "$RUNNER_TEMP/taft-unpacked"
+          package_roots=("$RUNNER_TEMP/taft-unpacked"/taft-*)
+          test "${#package_roots[@]}" -eq 1
+          cd "${package_roots[0]}"
+          test -f LICENSE
+          test -f log4cplus.properties
+          test -f docs/README.md
+          test -f Run_Files/test-framework-configuration.txt
+          test "$(./bin/TAFT --version | tail -n 1)" = "$expected_version"
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.environment }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
