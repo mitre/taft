@@ -47,7 +47,49 @@ This application needs aircraft performance data in order to propogate the dynam
 
 ### Continuous Integration & Testing
 
-This code base is heavily tested internally. Publicly, we test using GitHub Actions. See the [ci.yml](https://github.com/mitre/taft/blob/main/.github/workflows/ci.yml) for details.
+GitHub Actions builds TAFT, runs its unit tests, and checks a packaged executable on
+`ubuntu-latest`, `macos-latest`, and Rocky Linux 9. The Rocky job is named
+`rocky-latest` and runs in the `rockylinux:9` container on an Ubuntu host.
+The `:9` image tracks the latest Rocky Linux 9 minor release. CI uses CMake
+3.31.10 to support the existing dependency build scripts.
+
+Pull requests targeting `main`, pushes to `main`, and merge-queue groups run the
+full matrix. Each job uploads its test report and a `.tar.gz` binary package for
+review. The `CI required` check passes only after every environment's build,
+tests, and package checks succeed; select that check in the `main` ruleset.
+
+The workflow layout follows `aircraft_simulation_core`: [ci.yml](https://github.com/mitre/taft/blob/main/.github/workflows/ci.yml)
+handles PR and branch validation, [build.yml](https://github.com/mitre/taft/blob/main/.github/workflows/build.yml)
+provides the shared build/test/package matrix, and [release.yml](https://github.com/mitre/taft/blob/main/.github/workflows/release.yml)
+handles tag validation and publication.
+
+### Releases
+
+Pushing a version tag first validates the version and tagged commit, then runs
+the same build, test, and package checks on all three environments. Only after
+every environment passes does CI publish a GitHub Release
+with generated release notes, three binary archives, a source archive, and
+`SHA256SUMS` checksums. Releases are assembled as drafts before being published;
+reruns can finish an incomplete draft but do not replace published releases.
+
+Tags must match the numeric version in the root `CMakeLists.txt`. Both `0.0.1`
+and `v0.0.1` are supported; a suffix such as `v0.0.1-rc.1` creates a prerelease.
+Stable release commits must be reachable from `main`; prereleases can test branch
+commits before merging. Release notes use the same label categories as
+`aircraft_simulation_core`: breaking changes, features, fixes, documentation,
+and other changes. For example, after merging the release commit into `main`:
+
+```bash
+git tag v0.0.1
+git push origin v0.0.1
+```
+
+Binary archives are named `taft-VERSION-PLATFORM-ARCH.tar.gz` and include
+`bin/TAFT`, logging configuration, documentation, example inputs, and license
+notices. Extract the archive and run `./bin/TAFT --version` from its top-level
+directory. Choose the archive matching your OS and architecture. Running a
+simulation still requires an aircraft-performance provider and its data, as
+described above; those are not included in the public binaries.
 
 ### Compile
 
