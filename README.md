@@ -15,7 +15,9 @@
 > (c) 2026 The MITRE Corporation. All Rights Reserved.
 >
 > Approved for Public Release; Distribution Unlimited. 26-2350
+
 **Important: This work is in progress and is NOT ready-for-use today.**
+
 TAFT is a C++ framework for running aircraft-dynamics scenarios and collecting
 CSV results for TOAC in-the-loop testing. It was initialized from a source
 copy of [FMACM](https://github.com/mitre/FMACM).
