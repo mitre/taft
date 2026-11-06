@@ -47,7 +47,6 @@ class StaticGuidanceTest : public ::testing::Test {
 
       GuidanceFromStaticData::PlannedDescentParameters parameters;
       parameters.planned_transition_altitude = Units::MetersLength(2000);
-      parameters.planned_transition_ias = Units::MetersPerSecondSpeed(120);
       parameters.planned_cruise_mach = cruise_mach;
       return GuidanceFromStaticData(horizontal_path, vertical_path, parameters);
    }
