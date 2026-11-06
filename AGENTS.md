@@ -8,9 +8,8 @@ FMACM source into a new repository. It uses `aircraft_simulation_core` for the
 simulation models. Read `README.md`, `docs/README.md`, and `CMakeLists.txt` before
 changing behavior.
 
-TAFT is a separate Git repository, even when checked out inside a larger AAESim
-workspace. Run Git and build commands from this repository root. Public builds
-must not depend on sibling checkouts, MITRE-internal services, or licensed data.
+TAFT is a separate Git repository. Run Git and build commands from this repository root.
+Public builds must not depend on sibling checkouts, MITRE-internal services, or licensed data.
 
 ## Code organization
 
@@ -25,8 +24,7 @@ must not depend on sibling checkouts, MITRE-internal services, or licensed data.
 - `docs/README.md` and `docs/_config.yml`: guide and GitHub Pages configuration.
 
 Use `mitre::oss::taft` for TAFT-owned C++ declarations; `loader` and `test` may be
-nested namespaces. `main()` stays global. The former `fmacm` and `testvector`
-namespaces have been removed. Preserve namespaces belonging to dependencies.
+nested namespaces. `main()` stays global. Preserve namespaces belonging to dependencies.
 Match nearby code and the repository's `.clang-format`; avoid unrelated formatting.
 
 ## Build and verification

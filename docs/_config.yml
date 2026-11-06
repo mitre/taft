@@ -1,5 +1,5 @@
 title: TAFT
-description: Test Automation Framework for TOAC — aircraft-dynamics scenarios and CSV results for avionics research.
+description: Test Automation Framework for TOAC — aircraft-dynamics scenarios and CSV results for TOAC avionics testing in the loop with hardward/software FMC.
 url: https://mitre.github.io
 baseurl: /taft
 repository: mitre/taft
