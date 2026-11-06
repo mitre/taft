@@ -58,7 +58,7 @@ bool TestFrameworkScenario::load(DecodedStream *input) {
 void TestFrameworkScenario::PostLoad(const std::string &bada_data_path,
                                      std::vector<FrameworkAircraftLoader> &aircraft_loaders) {
 #ifdef MITRE_BADA3_LIBRARY
-   aaesim::bada::Bada3Factory::SetBadaDataPath(bada_data_path, Atmosphere::AtmosphereType::BADA37);
+   aaesim::bada::Bada3Factory::SetBadaDataPath(bada_data_path, mitre::oss::simcore::Atmosphere::AtmosphereType::BADA37);
 #endif
 
    std::for_each(aircraft_loaders.begin(), aircraft_loaders.end(), [this](FrameworkAircraftLoader loader) {
@@ -76,7 +76,7 @@ void TestFrameworkScenario::SimulateAllIterations() {
    taft_state_writer.SetScenarioName(GetScenarioName());
 
    LOG4CPLUS_INFO(m_logger, "Running TAFT scenario " << GetScenarioName());
-   aaesim::open_source::SimulationTime time;
+   mitre::oss::simcore::SimulationTime time;
    bool scenario_complete = false;
    while (!scenario_complete) {
       scenario_complete = AdvanceAllAircraft(time);
@@ -96,7 +96,7 @@ void TestFrameworkScenario::SimulateAllIterations() {
    taft_state_writer.Finish();
 }
 
-bool TestFrameworkScenario::AdvanceAllAircraft(aaesim::open_source::SimulationTime &time) {
+bool TestFrameworkScenario::AdvanceAllAircraft(mitre::oss::simcore::SimulationTime &time) {
    bool all_aircraft_complete = true;
    auto advance_aircraft = [this, &all_aircraft_complete, &time](std::shared_ptr<TestFrameworkAircraft> &aircraft) {
       bool aircraft_finished = aircraft->Update(time);

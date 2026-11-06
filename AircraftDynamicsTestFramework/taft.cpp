@@ -58,7 +58,7 @@ const std::string VERSION_FLAG("--version");
 int main(int argc, char *argv[]) {
    using namespace mitre::oss::taft;
    log4cplus::Initializer initializer;
-   LoadLoggerProperties();
+   mitre::oss::simcore::LoadLoggerProperties();
    LOG4CPLUS_INFO(logger, "running " << TAFT_VERSION);
 
    if (argc == 2) {
@@ -150,7 +150,7 @@ void ProcessScenarioDescriptions(
             stream.set_echo(false);
             stream.set_Local_Path(FilePath(cwd));
             stream.set_Archive_Director(std::make_shared<RunFileArchiveDirector>());
-            auto scenario_root_name = aaesim::open_source::ScenarioUtils::ResolveScenarioRootName(scenario_file_name);
+            auto scenario_root_name = mitre::oss::simcore::ScenarioUtils::ResolveScenarioRootName(scenario_file_name);
             scenario->SetScenarioName(scenario_root_name);
             scenario->load(&stream);
             scenario->SimulateAllIterations();

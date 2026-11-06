@@ -30,7 +30,7 @@ ForeWindReader::ForeWindReader(std::shared_ptr<std::istream> input_stream, int h
 
 ForeWindReader::~ForeWindReader() {}
 
-bool ForeWindReader::ReadWind(aaesim::open_source::WeatherPrediction &weather_prediction) {
+bool ForeWindReader::ReadWind(mitre::oss::simcore::WeatherPrediction &weather_prediction) {
    const int ALTITUDE_COUNT(5);
 
    weather_prediction.east_west().SetBounds(1, ALTITUDE_COUNT);

@@ -52,8 +52,8 @@ bool ApplicationLoader::load(DecodedStream *input) {
    return m_loaded;
 }
 
-std::shared_ptr<aaesim::open_source::FlightDeckApplication> ApplicationLoader::CreateApplication(
-      aaesim::open_source::WeatherPrediction &avionic_weather_predictor) {
+std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> ApplicationLoader::CreateApplication(
+      mitre::oss::simcore::WeatherPrediction &avionic_weather_predictor) {
    if (m_im_speed_command_file.IsLoaded()) {
       Units::Time delay_duration =
             m_pilot_delay_configuration.IsEnabled() ? m_pilot_delay_configuration.DelayDuration() : Units::ZERO_TIME;
@@ -61,9 +61,9 @@ std::shared_ptr<aaesim::open_source::FlightDeckApplication> ApplicationLoader::C
       return std::make_shared<SpeedCommandsFromStaticData>(speed_commands);
    }
 
-   auto statistical_pilot_delay = aaesim::open_source::StatisticalPilotDelay::NoDelay();
+   auto statistical_pilot_delay = mitre::oss::simcore::StatisticalPilotDelay::NoDelay();
    if (m_pilot_delay_configuration.IsEnabled()) {
-      statistical_pilot_delay = aaesim::open_source::StatisticalPilotDelay::WithDelay(
+      statistical_pilot_delay = mitre::oss::simcore::StatisticalPilotDelay::WithDelay(
             m_pilot_delay_configuration.DelayDuration(), Units::zero(), avionic_weather_predictor.getAtmosphere());
    }
 
@@ -74,7 +74,7 @@ std::shared_ptr<aaesim::open_source::FlightDeckApplication> ApplicationLoader::C
       time_based_achieve_algorithm->SetPilotDelay(statistical_pilot_delay);
       auto adapted_algorithm = std::make_shared<interval_management::open_source::FIMAlgorithmAdapter>(
             time_based_achieve_algorithm, IMUtils::IMAlgorithmTypes::TIMEBASEDACHIEVE);
-      return std::static_pointer_cast<aaesim::open_source::FlightDeckApplication>(adapted_algorithm);
+      return std::static_pointer_cast<mitre::oss::simcore::FlightDeckApplication>(adapted_algorithm);
    }
    if (m_sample_algorithm_distance_goal.IsLoaded()) {
       std::shared_ptr<interval_management::open_source::IMAlgorithm> distance_based_achieve_algorithm =
@@ -82,11 +82,11 @@ std::shared_ptr<aaesim::open_source::FlightDeckApplication> ApplicationLoader::C
       distance_based_achieve_algorithm->SetPilotDelay(statistical_pilot_delay);
       auto adapted_algorithm = std::make_shared<interval_management::open_source::FIMAlgorithmAdapter>(
             distance_based_achieve_algorithm, IMUtils::IMAlgorithmTypes::DISTANCEBASEDACHIEVE);
-      return std::static_pointer_cast<aaesim::open_source::FlightDeckApplication>(adapted_algorithm);
+      return std::static_pointer_cast<mitre::oss::simcore::FlightDeckApplication>(adapted_algorithm);
    }
 #endif
 
-   return std::make_shared<aaesim::open_source::NullFlightDeckApplication>();
+   return std::make_shared<mitre::oss::simcore::NullFlightDeckApplication>();
 }
 
 bool ApplicationLoader::PilotConfiguration::load(DecodedStream *input) {

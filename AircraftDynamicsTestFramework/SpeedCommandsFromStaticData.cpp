@@ -28,8 +28,8 @@ SpeedCommandsFromStaticData::SpeedCommandsFromStaticData(
       const std::vector<SpeedCommandsFromStaticData::SpeedRecord> &speed_data, Units::Time pilot_delay_duration)
    : m_speed_data(speed_data), m_pilot_delay_seconds(pilot_delay_duration) {}
 
-aaesim::open_source::Guidance SpeedCommandsFromStaticData::Update(Units::Time time) {
-   aaesim::open_source::Guidance guidance;
+mitre::oss::simcore::Guidance SpeedCommandsFromStaticData::Update(Units::Time time) {
+   mitre::oss::simcore::Guidance guidance;
    guidance.SetValid(false);
 
    const Units::Time lookup_time = time - m_pilot_delay_seconds;
@@ -64,11 +64,11 @@ aaesim::open_source::Guidance SpeedCommandsFromStaticData::Update(Units::Time ti
 }
 
 void SpeedCommandsFromStaticData::Initialize(
-      aaesim::open_source::FlightDeckApplicationInitializer &initializer_visitor) {}
+      mitre::oss::simcore::FlightDeckApplicationInitializer &initializer_visitor) {}
 
-aaesim::open_source::Guidance SpeedCommandsFromStaticData::Update(
-      const aaesim::open_source::SimulationTime &simtime, const aaesim::open_source::Guidance &current_guidance,
-      const aaesim::open_source::DynamicsState &dynamics_state, const aaesim::open_source::AircraftState &own_state) {
+mitre::oss::simcore::Guidance SpeedCommandsFromStaticData::Update(
+      const mitre::oss::simcore::SimulationTime &simtime, const mitre::oss::simcore::Guidance &current_guidance,
+      const mitre::oss::simcore::DynamicsState &dynamics_state, const mitre::oss::simcore::AircraftState &own_state) {
    return Update(simtime.GetCurrentSimulationTime());
 }
 
