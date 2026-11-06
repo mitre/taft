@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include <loader/Loadable.h>
 #include <scalar/Angle.h>
 #include <scalar/Length.h>
 
@@ -55,10 +54,8 @@ class GuidanceFromStaticData final : mitre::oss::simcore::GuidanceCalculator {
    struct PlannedDescentParameters {
       PlannedDescentParameters()
          : planned_transition_altitude(Units::Infinity()),
-           planned_transition_ias(Units::NegInfinity()),
            planned_cruise_mach(0) {}
       Units::Length planned_transition_altitude;
-      Units::Speed planned_transition_ias;
       double planned_cruise_mach;
    };
 

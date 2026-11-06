@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <loader/LoggingLoadable.h>
-
 #include <memory>
 #include <string>
 #include <tuple>
@@ -31,24 +29,21 @@
 #include "public/WeatherTruth.h"
 
 namespace mitre::oss::taft {
-class FrameworkAircraftLoader final : public LoggingLoadable {
+class FrameworkAircraftLoader final {
   public:
-   FrameworkAircraftLoader();
-   bool load(DecodedStream *input) override;
+   explicit FrameworkAircraftLoader(const AircraftConfiguration &configuration);
    std::shared_ptr<TestFrameworkAircraft> BuildAircraft();
 
   private:
-   static double m_mass_fraction_default, m_start_time_default;
    int m_start_time{0};
    double m_mass_fraction{0};
    std::string m_ac_type{};
    std::string m_speed_management_type{};
-   std::string m_ttv_csv_file{};
-   std::string m_forewind_csv_file{};
+   std::string m_traffic_csv_file{};
    std::string m_env_csv_file{};
    std::string m_env_csv_data_index{};
-   GuidanceDataLoader m_guidance_loader{};
-   ApplicationLoader m_flightdeck_application_loader{};
+   GuidanceDataLoader m_guidance_loader;
+   ApplicationLoader m_flightdeck_application_loader;
    mitre::oss::simcore::EarthModel::LocalPositionEnu m_initial_local_position{};
 
    std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> BuildAircraftPerformance(
@@ -63,7 +58,7 @@ class FrameworkAircraftLoader final : public LoggingLoadable {
    std::shared_ptr<WeatherTruthFromStaticData> BuildTrueWeather(const std::string &env_csv_file,
                                                                        const std::string &env_csv_data_index,
                                                                        Units::Length initial_altitude);
-   std::shared_ptr<mitre::oss::simcore::ADSBReceiver> BuildAdsbReceiver(std::string ttv_csv_file);
+   std::shared_ptr<mitre::oss::simcore::ADSBReceiver> BuildAdsbReceiver(std::string traffic_csv_file);
    mitre::oss::simcore::AircraftState BuildInitialState(
          std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> &dynamics, Units::Time start_time,
          Units::Length initial_altitude, const mitre::oss::simcore::EarthModel::GeodeticPosition &wgs84_position);
@@ -71,9 +66,5 @@ class FrameworkAircraftLoader final : public LoggingLoadable {
          std::shared_ptr<GuidanceFromStaticData> &guidance);
    std::tuple<bool, mitre::oss::simcore::EarthModel::LocalPositionEnu> IsDistanceAlongPathValid(
          std::shared_ptr<GuidanceFromStaticData> &guidance, const Units::Length &target_distance_along_path) const;
-   std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> BuildFlightdeckApplication(
-         std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> &performance,
-         std::shared_ptr<mitre::oss::simcore::ADSBReceiver> &receiver, const mitre::oss::simcore::AircraftState &state,
-         const GuidanceFromStaticData::PlannedDescentParameters &guidance_descent_parameters);
 };
 }  // namespace mitre::oss::taft

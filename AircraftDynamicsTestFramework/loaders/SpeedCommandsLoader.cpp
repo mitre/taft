@@ -18,54 +18,44 @@
 
 #include "framework/SpeedCommandsLoader.h"
 
-#include <string>
+#include <fstream>
+#include <locale>
+#include <sstream>
+#include <stdexcept>
 #include <vector>
 
-#include "MiniCSV/minicsv.h"
-
-
 namespace mitre::oss::taft::loader {
+SpeedCommandsLoader::SpeedCommandsLoader(const SpeedCommandsConfiguration &configuration)
+   : m_configuration(configuration) {}
 
-bool SpeedCommandsLoader::load(DecodedStream *input) {
-   set_stream(input);
-   register_var("imspd_csv_file", &m_file_path, true);
-   m_loaded = complete();
-   return m_loaded;
-}
-
-SpeedCommandsFromStaticData SpeedCommandsLoader::Build(Units::Time pilot_delay_duration) const {
-   if (m_loaded && !m_file_path.empty()) {
-      const auto speed_data = ReadStaticSpeedCommands(m_file_path);
-      return SpeedCommandsFromStaticData{speed_data, pilot_delay_duration};
+SpeedCommandsFromStaticData SpeedCommandsLoader::Build() const {
+   const auto filename = m_configuration.csv_file.string();
+   std::ifstream file(filename);
+   if (!file.is_open()) throw std::runtime_error("Cannot open speed commands CSV: " + filename);
+   std::string line;
+   if (!std::getline(file, line)) throw std::runtime_error(filename + ": missing CSV header");
+   std::vector<SpeedCommandsFromStaticData::SpeedRecord> records;
+   std::size_t line_number = 1;
+   while (std::getline(file, line)) {
+      ++line_number;
+      std::istringstream row(line);
+      row.imbue(std::locale::classic());
+      double time, speed;
+      char separator;
+      if (!(row >> time >> separator >> speed) || separator != ',')
+         throw std::runtime_error(filename + ": row " + std::to_string(line_number) + ": expected time,speed");
+      row >> std::ws;
+      if (!row.eof())
+         throw std::runtime_error(filename + ": row " + std::to_string(line_number) + ": unexpected trailing data");
+      SpeedCommandsFromStaticData::SpeedRecord record;
+      record.simtime = Units::SecondsTime(time);
+      record.speed_command = Units::MetersPerSecondSpeed(speed);
+      records.push_back(record);
    }
-   return SpeedCommandsFromStaticData();
-}
-
-const std::vector<SpeedCommandsFromStaticData::SpeedRecord> SpeedCommandsLoader::ReadStaticSpeedCommands(
-      const std::string &filename) const {
-   std::ifstream file(filename.c_str());
-   if (!file.is_open()) {
-      std::string error_msg = "Speed file " + filename + " not found.";
-      throw std::runtime_error(error_msg);
+   try {
+      return SpeedCommandsFromStaticData(records, Units::SecondsTime(m_configuration.pilot_delay_seconds));
+   } catch (const std::exception &error) {
+      throw std::runtime_error(filename + ": " + error.what());
    }
-
-   std::vector<SpeedCommandsFromStaticData::SpeedRecord> speed_data;
-   mini::csv::ifstream input_stream(filename);
-   input_stream.set_delimiter(',', ",");
-   if (input_stream.is_open()) {
-      input_stream.read_line();
-      while (input_stream.read_line()) {
-         double simtime_seconds, speed_command_mps;
-         input_stream >> simtime_seconds >> speed_command_mps;
-         SpeedCommandsFromStaticData::SpeedRecord speed_record;
-         speed_record.simtime = Units::SecondsTime(simtime_seconds);
-         speed_record.speed_command = Units::MetersPerSecondSpeed(speed_command_mps);
-         speed_data.push_back(speed_record);
-      }
-   }
-   input_stream.close();
-
-   return speed_data;
 }
-
-}  // namespace mitre::oss::taft::loader
+}

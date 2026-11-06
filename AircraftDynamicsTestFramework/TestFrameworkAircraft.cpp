@@ -56,6 +56,7 @@ bool TestFrameworkAircraft::Update(const SimulationTime &time) {
          m_speed_application->Update(time, current_guidance, m_dynamics->GetDynamicsState(), previous_state);
    if (speed_guidance_from_application.IsValid() && speed_guidance_from_application.m_ias_command > Units::ZERO_SPEED) {
       current_guidance.m_ias_command = speed_guidance_from_application.m_ias_command;
+      current_guidance.SetSelectedSpeedType(SpeedValueType::INDICATED_AIR_SPEED);
    }
    AircraftState state_result =
          m_dynamics->Update(m_states.back().GetUniqueId(), time, current_guidance, m_aircraft_control);

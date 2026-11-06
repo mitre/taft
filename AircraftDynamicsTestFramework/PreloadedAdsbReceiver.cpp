@@ -30,9 +30,9 @@
 namespace mitre::oss::taft {
 
 PreloadedAdsbReceiver::PreloadedAdsbReceiver(
-      const std::string &ttv_csv_file,
+      const std::string &traffic_csv_file,
       std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> tangent_plane_sequence)
-   : m_ttv_filename(ttv_csv_file), m_tanget_plane_sequence(tangent_plane_sequence) {}
+   : m_traffic_filename(traffic_csv_file), m_tanget_plane_sequence(tangent_plane_sequence) {}
 
 mitre::oss::simcore::ADSBSVReport PreloadedAdsbReceiver::GetCurrentADSBReport(int id) const {
    if (m_most_recent_adsb_reports.empty()) return mitre::oss::simcore::ADSBSVReport::EMPTY_REPORT;
@@ -63,7 +63,7 @@ std::map<int, mitre::oss::simcore::ADSBSVReport> const PreloadedAdsbReceiver::Ge
 }
 
 void PreloadedAdsbReceiver::Initialize(Units::Length adsb_reception_range_threshold) {
-   mitre::oss::simcore::TvReader data_reader(m_ttv_filename, 1);
+   mitre::oss::simcore::TvReader data_reader(m_traffic_filename, 1);
    while (data_reader.Advance()) {
       mitre::oss::simcore::EarthModel::GeodeticPosition geo_position;
       geo_position.latitude = data_reader.GetLat();

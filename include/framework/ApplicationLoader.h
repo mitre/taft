@@ -18,54 +18,19 @@
 
 #pragma once
 
-#include <loader/LoggingLoadable.h>
-#include <scalar/Time.h>
-
-#include <map>
 #include <memory>
-#include <vector>
+#include <optional>
 
-#include "framework/SpeedCommandsLoader.h"
+#include "framework/Configuration.h"
 #include "public/FlightDeckApplication.h"
-#include "public/WeatherPrediction.h"
-
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-#include "imalgs/IMDistBasedAchieve.h"
-#include "imalgs/IMTimeBasedAchieve.h"
-#endif
 
 namespace mitre::oss::taft {
-class ApplicationLoader final : public Loadable {
+class ApplicationLoader final {
   public:
-   ApplicationLoader();
-   ~ApplicationLoader() = default;
-
-   bool load(DecodedStream *input) override;
-
-   std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> CreateApplication(
-         mitre::oss::simcore::WeatherPrediction &avionic_weather_predictor);
-
-   bool IsLoaded() const { return m_loaded; }
+   explicit ApplicationLoader(const std::optional<SpeedCommandsConfiguration> &configuration);
+   std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> CreateApplication() const;
 
   private:
-   class PilotConfiguration final : public Loadable {
-     public:
-      PilotConfiguration() : m_is_enabled(false), m_delay_duration(0) {}
-      bool load(DecodedStream *input) override;
-      bool IsEnabled() const { return m_is_enabled; }
-      Units::SecondsTime DelayDuration() const { return m_delay_duration; }
-
-     private:
-      bool m_is_enabled;
-      Units::SecondsTime m_delay_duration;
-   };
-   bool m_loaded{false};
-   loader::SpeedCommandsLoader m_im_speed_command_file{};
-   PilotConfiguration m_pilot_delay_configuration{};
-
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-   interval_management::open_source::IMTimeBasedAchieve m_sample_algorithm_time_goal;
-   interval_management::open_source::IMDistBasedAchieve m_sample_algorithm_distance_goal;
-#endif
+   std::optional<SpeedCommandsConfiguration> m_speed_commands;
 };
-}  // namespace mitre::oss::taft
+}

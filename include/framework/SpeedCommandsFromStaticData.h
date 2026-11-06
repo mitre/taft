@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include <loader/Loadable.h>
 #include <scalar/Speed.h>
 #include <scalar/Time.h>
 
@@ -51,12 +50,9 @@ class SpeedCommandsFromStaticData final : public mitre::oss::simcore::FlightDeck
    bool IsActive() const override;
 
   private:
-   static const int m_hist_len = 20;
-
    mitre::oss::simcore::Guidance Update(Units::Time time);
 
    std::vector<SpeedRecord> m_speed_data;
-   double m_ias_hist[m_hist_len]{};
    Units::SecondsTime m_pilot_delay_seconds;
 };
 

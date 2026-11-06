@@ -18,14 +18,13 @@
 
 #pragma once
 
-#include <loader/Loadable.h>
-
 #include <list>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "framework/Configuration.h"
 #include "HfpReader2020.h"
 #include "MiniCSV/minicsv.h"
 #include "framework/GuidanceFromStaticData.h"
@@ -33,19 +32,11 @@
 #include "public/Waypoint.h"
 
 namespace mitre::oss::taft {
-class GuidanceDataLoader final : public Loadable {
+class GuidanceDataLoader final {
   public:
-   GuidanceDataLoader()
-      : m_loaded(false),
-        m_hfp_filename(),
-        m_vfp_filename(),
-        m_tangent_plane(),
-        m_compute_xy(true),
-        m_planned_descent_parameters() {}
-   bool load(DecodedStream *input) override;
+   explicit GuidanceDataLoader(const GuidanceConfiguration &configuration);
    std::shared_ptr<GuidanceFromStaticData> BuildGuidanceCalculator();
    std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> GetTangentPlaneSequence() const;
-   const bool IsLoaded() const;
    GuidanceFromStaticData::PlannedDescentParameters GetPlannedDescentParameters() const;
 
   private:
@@ -97,14 +88,11 @@ class GuidanceDataLoader final : public Loadable {
          const std::list<mitre::oss::simcore::Waypoint> &ordered_waypoints) const;
    void ComputeCourseColumnsInPlace(std::vector<mitre::oss::simcore::HorizontalPath> &horizontal_path) const;
 
-   bool m_loaded;
    std::string m_hfp_filename, m_vfp_filename, m_waypoint_sequence_file;
    std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> m_tangent_plane;
    bool m_compute_xy;
    GuidanceFromStaticData::PlannedDescentParameters m_planned_descent_parameters;
 };
-
-inline const bool GuidanceDataLoader::IsLoaded() const { return m_loaded; }
 
 inline std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> GuidanceDataLoader::GetTangentPlaneSequence() const {
    return m_tangent_plane;

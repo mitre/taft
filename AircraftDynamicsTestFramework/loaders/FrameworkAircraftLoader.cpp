@@ -18,7 +18,6 @@
 
 #include "framework/FrameworkAircraftLoader.h"
 
-#include <loader/NullLoader.h>
 #include <scalar/Length.h>
 
 #include <algorithm>
@@ -27,7 +26,6 @@
 #include <tuple>
 #include <utility>
 
-#include "framework/ForeWindReader.h"
 #include "framework/NullAircraftPerformance.h"
 #include "framework/PreloadedAdsbReceiver.h"
 #include "public/AircraftControllerFactory.h"
@@ -35,58 +33,27 @@
 #include "public/FullWindTrueWeatherOperator.h"
 #include "public/LegacyPositionEstimator.h"
 #include "public/NullADSBReceiver.h"
-#include "public/NullAtmosphere.h"
-#include "public/NullFlightDeckApplication.h"
-#include "public/PassThroughAssap.h"
 #include "public/SpeedOnPitchControl.h"
 #include "public/SpeedOnThrustControl.h"
-#include "public/USStandardAtmosphere1976.h"
-#include "public/WeatherPrediction.h"
-
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-#include "public/DefaultAircraftIntent.h"
-#include "imalgs/FIMAlgorithmInitializer.h"
-#endif
 
 #ifdef MITRE_BADA3_LIBRARY
 #include "bada/Bada3Factory.h"
-#include "bada/BadaAtmosphere37.h"
 #endif
 
 namespace mitre::oss::taft {
 
 using namespace mitre::oss::simcore;
 
-double FrameworkAircraftLoader::m_mass_fraction_default = 0.5;
-double FrameworkAircraftLoader::m_start_time_default = 0;
-
-FrameworkAircraftLoader::FrameworkAircraftLoader()
-   : m_start_time(m_start_time_default),
-     m_mass_fraction(m_mass_fraction_default),
-     m_ac_type(),
-     m_speed_management_type(),
-     m_ttv_csv_file(),
-     m_forewind_csv_file(),
-     m_env_csv_file(),
-     m_env_csv_data_index(),
-     m_guidance_loader(),
-     m_flightdeck_application_loader() {}
-
-bool FrameworkAircraftLoader::load(DecodedStream *input) {
-   set_stream(input);
-
-   register_var("initial_time_seconds", &m_start_time, false);
-   register_var("initial_mass_fraction", &m_mass_fraction, false);
-   register_var("ac_type", &m_ac_type, true);
-   register_var("speed_management_type", &m_speed_management_type, true);
-   register_var("env_csv_file", &m_env_csv_file, false);
-   register_var("env_data_index", &m_env_csv_data_index, false);
-   register_var("ttv_csv_file", &m_ttv_csv_file, false);
-   register_var("forewind_csv_file", &m_forewind_csv_file, false);
-   register_loadable_with_brackets("fms_guidance_data_files", &m_guidance_loader, true);
-   register_loadable_with_brackets("flight_deck_application", &m_flightdeck_application_loader, true);
-   return complete();
-}
+FrameworkAircraftLoader::FrameworkAircraftLoader(const AircraftConfiguration &configuration)
+   : m_start_time(configuration.initial_time_seconds),
+     m_mass_fraction(configuration.initial_mass_fraction),
+     m_ac_type(configuration.ac_type),
+     m_speed_management_type(configuration.speed_management_type),
+     m_traffic_csv_file(configuration.traffic_csv_file.string()),
+     m_env_csv_file(configuration.env_csv_file.string()),
+     m_env_csv_data_index(configuration.env_data_index),
+     m_guidance_loader(configuration.guidance),
+     m_flightdeck_application_loader(configuration.speed_commands) {}
 
 std::shared_ptr<TestFrameworkAircraft> FrameworkAircraftLoader::BuildAircraft() {
    auto bada_calculator = BuildAircraftPerformance(m_ac_type);
@@ -99,12 +66,11 @@ std::shared_ptr<TestFrameworkAircraft> FrameworkAircraftLoader::BuildAircraft() 
    m_guidance_loader.GetTangentPlaneSequence()->ConvertLocalToGeodetic(m_initial_local_position, wgs84);
    auto dynamics = BuildAircraftDynamics(bada_calculator, true_weather, guidance_calculator, wgs84);
    auto control = BuildAircraftControl(m_speed_management_type, bada_calculator);
-   auto receiver = BuildAdsbReceiver(m_ttv_csv_file);
+   auto receiver = BuildAdsbReceiver(m_traffic_csv_file);
    auto initial_state =
          BuildInitialState(dynamics, Units::SecondsTime(m_start_time),
                            Units::MetersLength(guidance_calculator->GetVerticalData().m_altitude_meters.back()), wgs84);
-   auto flightdeck_application = BuildFlightdeckApplication(bada_calculator, receiver, initial_state,
-                                                            m_guidance_loader.GetPlannedDescentParameters());
+   auto flightdeck_application = m_flightdeck_application_loader.CreateApplication();
 
    TestFrameworkAircraft::Builder builder;
    return builder.WithInitialState(initial_state)
@@ -243,11 +209,11 @@ std::shared_ptr<mitre::oss::simcore::AircraftControl> FrameworkAircraftLoader::B
 }
 
 std::shared_ptr<mitre::oss::simcore::ADSBReceiver> FrameworkAircraftLoader::BuildAdsbReceiver(
-      std::string ttv_csv_file) {
-   if (!ttv_csv_file.empty()) {
+      std::string traffic_csv_file) {
+   if (!traffic_csv_file.empty()) {
       const Units::NauticalMilesLength adsb_reception_distance(90);
       std::shared_ptr<mitre::oss::simcore::ADSBReceiver> adsb_receiver =
-            std::make_shared<PreloadedAdsbReceiver>(ttv_csv_file, m_guidance_loader.GetTangentPlaneSequence());
+            std::make_shared<PreloadedAdsbReceiver>(traffic_csv_file, m_guidance_loader.GetTangentPlaneSequence());
       adsb_receiver->Initialize(adsb_reception_distance);
       return adsb_receiver;
    }
@@ -269,52 +235,4 @@ mitre::oss::simcore::AircraftState FrameworkAircraftLoader::BuildInitialState(
          ->Build();
 }
 
-std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> FrameworkAircraftLoader::BuildFlightdeckApplication(
-      std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> &performance,
-      std::shared_ptr<mitre::oss::simcore::ADSBReceiver> &receiver, const mitre::oss::simcore::AircraftState &state,
-      const GuidanceFromStaticData::PlannedDescentParameters &guidance_descent_parameters) {
-#ifndef SAMPLE_ALGORITHM_LIBRARY
-   return std::make_shared<mitre::oss::simcore::NullFlightDeckApplication>();
-#else
-
-#ifdef MITRE_BADA3_LIBRARY
-   auto bada37_atmosphere = aaesim::bada::Bada3Factory::MakeAtmosphereFromTemperatureOffset(
-         Atmosphere::AtmosphereType::BADA37, Units::CelsiusTemperature{0});
-   mitre::oss::simcore::WeatherPrediction weather_prediction =
-         mitre::oss::simcore::WeatherPrediction::CreateZeroWindPrediction(bada37_atmosphere);
-#else
-   mitre::oss::simcore::WeatherPrediction weather_prediction =
-         mitre::oss::simcore::WeatherPrediction::CreateZeroWindPrediction(std::make_unique<USStandardAtmosphere1976>());
-#endif
-   if (!m_forewind_csv_file.empty()) {
-      ForeWindReader forecast_wind_reader{m_forewind_csv_file, 1};
-      forecast_wind_reader.ReadWind(weather_prediction);
-   }
-   mitre::oss::simcore::OwnshipFmsPredictionParameters fms_parameters;
-   fms_parameters.fms_intent = std::make_shared<mitre::oss::simcore::DefaultAircraftIntent>();
-   fms_parameters.expected_cruise_altitude = state.GetAltitudeMsl();
-   fms_parameters.maximum_allowable_bank_angle = Units::DegreesAngle(30);
-   fms_parameters.transition_altitude = guidance_descent_parameters.planned_transition_altitude;
-   fms_parameters.transition_ias = guidance_descent_parameters.planned_transition_ias;
-   fms_parameters.transition_mach = guidance_descent_parameters.planned_cruise_mach;
-   fms_parameters.weather_prediction = weather_prediction;
-   mitre::oss::simcore::OwnshipPerformanceParameters performance_parameters;
-   performance_parameters.aerodynamics = performance->GetAerodynamicsInformation();
-   performance_parameters.flap_speeds = performance->GetFlapSpeeds();
-   performance_parameters.flight_envelope = performance->GetFlightEnvelopeInformation();
-   performance_parameters.mass_data = performance->GetAircraftMassInformation();
-   auto surveillance_processor = std::make_shared<mitre::oss::simcore::PassThroughAssap>();
-   surveillance_processor->Initialize(receiver);
-   interval_management::open_source::FIMAlgorithmInitializer::Builder initializer_builder;
-   interval_management::open_source::FIMAlgorithmInitializer sample_algorithm_initializer =
-         initializer_builder.AddOwnshipFmsPredictionParameters(fms_parameters)
-               ->AddOwnshipPerformanceParameters(performance_parameters)
-               ->AddSurveillanceProcessor(surveillance_processor)
-               ->Build();
-   auto flightdeck_application = m_flightdeck_application_loader.CreateApplication(weather_prediction);
-   flightdeck_application->Initialize(sample_algorithm_initializer);
-   return flightdeck_application;
-#endif
 }
-
-}  // namespace mitre::oss::taft

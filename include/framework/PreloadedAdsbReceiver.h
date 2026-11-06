@@ -30,7 +30,7 @@ namespace mitre::oss::taft {
 class PreloadedAdsbReceiver final : public mitre::oss::simcore::ADSBReceiver {
   public:
    PreloadedAdsbReceiver() = default;
-   PreloadedAdsbReceiver(const std::string &ttv_csv_file,
+   PreloadedAdsbReceiver(const std::string &traffic_csv_file,
                          std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> tangent_plane_sequence);
 
    mitre::oss::simcore::ADSBSVReport GetCurrentADSBReport(int id) const override;
@@ -44,7 +44,7 @@ class PreloadedAdsbReceiver final : public mitre::oss::simcore::ADSBReceiver {
                                                             const mitre::oss::simcore::AircraftState &state) override;
 
   private:
-   std::string m_ttv_filename;
+   std::string m_traffic_filename;
    std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> m_tanget_plane_sequence;
    std::map<int, mitre::oss::simcore::ADSBSVReport> m_most_recent_adsb_reports;            // ADSB data stored as
                                                                                            // [numericFlightID][Report]

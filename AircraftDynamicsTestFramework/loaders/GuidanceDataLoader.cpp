@@ -18,7 +18,6 @@
 
 #include "framework/GuidanceDataLoader.h"
 
-#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>
@@ -39,24 +38,16 @@ using namespace mitre::oss::simcore;
 
 log4cplus::Logger GuidanceDataLoader::m_logger = log4cplus::Logger::getInstance("GuidanceDataLoader");
 
-bool GuidanceDataLoader::load(DecodedStream *input) {
-   double tmp_mach(0), tmp_ias(INT16_MIN), tmp_altitude(INT32_MAX);
-   set_stream(input);
-   register_var("vfp_csv_file", &m_vfp_filename, true);
-   register_var("planned_cruise_mach", &tmp_mach, false);
-   register_var("planned_transition_ias", &tmp_ias, false);
-   register_var("planned_transition_altitude", &tmp_altitude, false);
-   register_var("hfp_csv_file", &m_hfp_filename, false);
-   register_var("hfp_compute_xy", &m_compute_xy, false);
-   register_var("waypoint_sequence", &m_waypoint_sequence_file, false);
-   m_loaded = complete();
-
-   if (tmp_altitude < INT32_MAX)
-      m_planned_descent_parameters.planned_transition_altitude = Units::FeetLength(tmp_altitude);
-   if (tmp_ias > 0) m_planned_descent_parameters.planned_transition_ias = Units::KnotsSpeed(tmp_ias);
-   if (tmp_mach > 0) m_planned_descent_parameters.planned_cruise_mach = tmp_mach;
-
-   return m_loaded;
+GuidanceDataLoader::GuidanceDataLoader(const GuidanceConfiguration &configuration)
+   : m_hfp_filename(configuration.hfp_csv_file.string()),
+     m_vfp_filename(configuration.vfp_csv_file.string()),
+     m_waypoint_sequence_file(configuration.waypoint_sequence_csv_file.string()),
+     m_compute_xy(configuration.hfp_compute_xy) {
+   if (configuration.planned_transition_altitude_feet)
+      m_planned_descent_parameters.planned_transition_altitude =
+            Units::FeetLength(*configuration.planned_transition_altitude_feet);
+   if (configuration.planned_cruise_mach)
+      m_planned_descent_parameters.planned_cruise_mach = *configuration.planned_cruise_mach;
 }
 
 std::shared_ptr<GuidanceFromStaticData> GuidanceDataLoader::BuildGuidanceCalculator() {

@@ -18,11 +18,14 @@
 
 #include "framework/TestFrameworkScenario.h"
 
+#include <algorithm>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "framework/AircraftStateWriter.h"
+#include "framework/FrameworkAircraftLoader.h"
 
 #ifdef MITRE_BADA3_LIBRARY
 #include "bada/Bada3Factory.h"
@@ -32,45 +35,19 @@ namespace mitre::oss::taft {
 
 log4cplus::Logger TestFrameworkScenario::m_logger = log4cplus::Logger::getInstance("TestFrameworkScenario");
 
-TestFrameworkScenario::TestFrameworkScenario() : Scenario(), m_aircraft_in_scenario() {
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-   m_sample_algorithm_writer =  // cppcheck-suppress useInitializationList
-         std::make_unique<interval_management::open_source::FIMAlgorithmDataWriter>();
-   m_sample_algorithm_kinematic_writer =  // cppcheck-suppress useInitializationList
-         std::make_unique<interval_management::open_source::PredictionFileKinematic>();
-#endif
-}
-
-bool TestFrameworkScenario::load(DecodedStream *input) {
-   std::string bada_data_path;
-   std::vector<FrameworkAircraftLoader> aircraft_loaders;
-
-   set_stream(input);
-   register_var("bada_data_path", &bada_data_path, true);
-   register_named_vector_item("aircraft", &aircraft_loaders, true);
-   complete();
-
-   PostLoad(bada_data_path, aircraft_loaders);
-
-   return true;
-}
-
-void TestFrameworkScenario::PostLoad(const std::string &bada_data_path,
-                                     std::vector<FrameworkAircraftLoader> &aircraft_loaders) {
+TestFrameworkScenario::TestFrameworkScenario(const ScenarioConfiguration &configuration) {
+   SetScenarioName(configuration.GetScenarioName());
 #ifdef MITRE_BADA3_LIBRARY
-   aaesim::bada::Bada3Factory::SetBadaDataPath(bada_data_path, mitre::oss::simcore::Atmosphere::AtmosphereType::BADA37);
+   if (configuration.bada_data_path.empty())
+      throw std::runtime_error(configuration.source_file.string() + ": bada_data_path: required by the BADA provider");
+   aaesim::bada::Bada3Factory::SetBadaDataPath(configuration.bada_data_path.string(),
+                                               mitre::oss::simcore::Atmosphere::AtmosphereType::BADA37);
 #endif
-
-   std::for_each(aircraft_loaders.begin(), aircraft_loaders.end(), [this](FrameworkAircraftLoader loader) {
-      m_aircraft_in_scenario.push_back(loader.BuildAircraft());
-   });
+   for (const auto &aircraft : configuration.aircraft)
+      m_aircraft_in_scenario.push_back(FrameworkAircraftLoader(aircraft).BuildAircraft());
 }
 
 void TestFrameworkScenario::SimulateAllIterations() {
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-   m_sample_algorithm_writer->SetScenarioName(GetScenarioName());
-   m_sample_algorithm_kinematic_writer->SetScenarioName(GetScenarioName());
-#endif
 
    AircraftStateWriter taft_state_writer;
    taft_state_writer.SetScenarioName(GetScenarioName());
@@ -88,24 +65,13 @@ void TestFrameworkScenario::SimulateAllIterations() {
                     taft_state_writer.Gather(aircraft->GetAircraftStates());
                  });
 
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-   m_sample_algorithm_writer->Finish();
-   m_sample_algorithm_kinematic_writer->Finish();
-#endif
-
    taft_state_writer.Finish();
 }
 
 bool TestFrameworkScenario::AdvanceAllAircraft(mitre::oss::simcore::SimulationTime &time) {
    bool all_aircraft_complete = true;
-   auto advance_aircraft = [this, &all_aircraft_complete, &time](std::shared_ptr<TestFrameworkAircraft> &aircraft) {
+   auto advance_aircraft = [&all_aircraft_complete, &time](std::shared_ptr<TestFrameworkAircraft> &aircraft) {
       bool aircraft_finished = aircraft->Update(time);
-
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-      m_sample_algorithm_writer->Gather(0, time, "IMACID", aircraft->GetFlightDeckApplication());
-      m_sample_algorithm_kinematic_writer->Gather(0, time.GetCurrentSimulationTime(), "IMACID",
-                                                  aircraft->GetFlightDeckApplication());
-#endif
 
       all_aircraft_complete = all_aircraft_complete && aircraft_finished;
    };
