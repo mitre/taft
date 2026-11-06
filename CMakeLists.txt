@@ -72,7 +72,7 @@ if(NOT TARGET mitre::oss::simcore)
     CPMAddPackage(
         NAME aircraft_simulation_core
         GIT_REPOSITORY https://github.com/mitre/aircraft_simulation_core.git
-        GIT_TAG 1.0.0
+        GIT_TAG 2.1.2
         OPTIONS
          "SIMCORE_BUILD_TESTING OFF"
     )
