@@ -29,7 +29,7 @@
 
 namespace mitre::oss::taft {
 
-class SpeedCommandsFromStaticData final : public aaesim::open_source::FlightDeckApplication {
+class SpeedCommandsFromStaticData final : public mitre::oss::simcore::FlightDeckApplication {
   public:
    struct SpeedRecord {
       SpeedRecord() : simtime(Units::infinity()), speed_command(Units::infinity()) {}
@@ -41,19 +41,19 @@ class SpeedCommandsFromStaticData final : public aaesim::open_source::FlightDeck
                                Units::Time pilot_delay_duration);
    ~SpeedCommandsFromStaticData() = default;
 
-   void Initialize(aaesim::open_source::FlightDeckApplicationInitializer &initializer_visitor) override;
+   void Initialize(mitre::oss::simcore::FlightDeckApplicationInitializer &initializer_visitor) override;
 
-   aaesim::open_source::Guidance Update(const aaesim::open_source::SimulationTime &simtime,
-                                        const aaesim::open_source::Guidance &current_guidance,
-                                        const aaesim::open_source::DynamicsState &dynamics_state,
-                                        const aaesim::open_source::AircraftState &own_state) override;
+   mitre::oss::simcore::Guidance Update(const mitre::oss::simcore::SimulationTime &simtime,
+                                        const mitre::oss::simcore::Guidance &current_guidance,
+                                        const mitre::oss::simcore::DynamicsState &dynamics_state,
+                                        const mitre::oss::simcore::AircraftState &own_state) override;
 
    bool IsActive() const override;
 
   private:
    static const int m_hist_len = 20;
 
-   aaesim::open_source::Guidance Update(Units::Time time);
+   mitre::oss::simcore::Guidance Update(Units::Time time);
 
    std::vector<SpeedRecord> m_speed_data;
    double m_ias_hist[m_hist_len]{};

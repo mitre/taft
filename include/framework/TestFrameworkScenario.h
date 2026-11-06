@@ -38,7 +38,7 @@
 
 namespace mitre::oss::taft {
 
-class TestFrameworkScenario final : public aaesim::open_source::Scenario, public LoggingLoadable {
+class TestFrameworkScenario final : public mitre::oss::simcore::Scenario, public LoggingLoadable {
   public:
    TestFrameworkScenario();
 
@@ -52,7 +52,7 @@ class TestFrameworkScenario final : public aaesim::open_source::Scenario, public
    static const Units::SecondsTime SIMULATION_TIME_STEP;
    static log4cplus::Logger m_logger;
 
-   bool AdvanceAllAircraft(aaesim::open_source::SimulationTime &time);
+   bool AdvanceAllAircraft(mitre::oss::simcore::SimulationTime &time);
    void PostLoad(const std::string &bada_data_path, std::vector<FrameworkAircraftLoader> &aircraft_loaders);
 
    std::vector<std::shared_ptr<TestFrameworkAircraft>> m_aircraft_in_scenario;

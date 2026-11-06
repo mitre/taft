@@ -42,8 +42,8 @@ class ApplicationLoader final : public Loadable {
 
    bool load(DecodedStream *input) override;
 
-   std::shared_ptr<aaesim::open_source::FlightDeckApplication> CreateApplication(
-         aaesim::open_source::WeatherPrediction &avionic_weather_predictor);
+   std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> CreateApplication(
+         mitre::oss::simcore::WeatherPrediction &avionic_weather_predictor);
 
    bool IsLoaded() const { return m_loaded; }
 

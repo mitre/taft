@@ -34,12 +34,12 @@
 
 namespace mitre::oss::taft {
 
-class ForeWindReader final : aaesim::open_source::DataReader {
+class ForeWindReader final : mitre::oss::simcore::DataReader {
   public:
    ForeWindReader(const std::string &file_name, int header_lines);
    ForeWindReader(std::shared_ptr<std::istream> input_stream, int header_lines);
    virtual ~ForeWindReader();
-   bool ReadWind(aaesim::open_source::WeatherPrediction &weather_prediction);
+   bool ReadWind(mitre::oss::simcore::WeatherPrediction &weather_prediction);
 
   private:
 };

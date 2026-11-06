@@ -24,14 +24,14 @@
 #include "public/FixedMassAircraftPerformance.h"
 
 namespace mitre::oss::taft {
-class NullAircraftPerformance final : public aaesim::open_source::FixedMassAircraftPerformance {
+class NullAircraftPerformance final : public mitre::oss::simcore::FixedMassAircraftPerformance {
   public:
    NullAircraftPerformance() = default;
    ~NullAircraftPerformance() = default;
    void GetDragCoefficients(const Units::Speed &calibrated_airspeed, const Units::Length &altitude_msl,
-                            const aaesim::open_source::bada_utils::FlapConfiguration &current_flap_configuration,
+                            const mitre::oss::simcore::bada_utils::FlapConfiguration &current_flap_configuration,
                             double &cd0, double &cd2, double &gear,
-                            aaesim::open_source::bada_utils::FlapConfiguration &flap_configuration) const override {
+                            mitre::oss::simcore::bada_utils::FlapConfiguration &flap_configuration) const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
@@ -44,31 +44,31 @@ class NullAircraftPerformance final : public aaesim::open_source::FixedMassAircr
 
    void GetDragCoefficientsAndIncrementFlapConfiguration(
          const Units::Speed &calibrated_airspeed, const Units::Length &altitude_msl, double &cd0, double &cd2,
-         double &gear, aaesim::open_source::bada_utils::FlapConfiguration &updated_flap_setting) override {
+         double &gear, mitre::oss::simcore::bada_utils::FlapConfiguration &updated_flap_setting) override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
    void GetConfigurationForIncreasedDrag(
          const Units::Speed &calibrated_airspeed, const Units::Length &altitude_msl,
-         aaesim::open_source::bada_utils::FlapConfiguration &updated_flap_setting) override {
+         mitre::oss::simcore::bada_utils::FlapConfiguration &updated_flap_setting) override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
    Units::NewtonsForce GetMaxThrust(const Units::Length &altitude_msl,
-                                    aaesim::open_source::bada_utils::FlapConfiguration flap_configuration,
-                                    aaesim::open_source::bada_utils::EngineThrustMode engine_thrust_mode,
+                                    mitre::oss::simcore::bada_utils::FlapConfiguration flap_configuration,
+                                    mitre::oss::simcore::bada_utils::EngineThrustMode engine_thrust_mode,
                                     Units::AbsCelsiusTemperature temperature_offset) const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   void GetCoefficientsForFlapConfiguration(aaesim::open_source::bada_utils::FlapConfiguration flap_configuration,
+   void GetCoefficientsForFlapConfiguration(mitre::oss::simcore::bada_utils::FlapConfiguration flap_configuration,
                                             double &cd0, double &cd2, double &gear) const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::FlapConfiguration GetFlapConfigurationForState(
+   mitre::oss::simcore::bada_utils::FlapConfiguration GetFlapConfigurationForState(
          const Units::Speed &calibrated_airspeed, const Units::Length &altitude_msl,
-         const aaesim::open_source::bada_utils::FlapConfiguration &current_flap_configuration) const override {
+         const mitre::oss::simcore::bada_utils::FlapConfiguration &current_flap_configuration) const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
@@ -80,11 +80,11 @@ class NullAircraftPerformance final : public aaesim::open_source::FixedMassAircr
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::FlapSpeeds GetFlapSpeeds() const override {
+   mitre::oss::simcore::bada_utils::FlapSpeeds GetFlapSpeeds() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::FlapConfiguration GetCurrentFlapConfiguration() const override {
+   mitre::oss::simcore::bada_utils::FlapConfiguration GetCurrentFlapConfiguration() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
@@ -92,39 +92,39 @@ class NullAircraftPerformance final : public aaesim::open_source::FixedMassAircr
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::AircraftType GetAircraftTypeInformation() const override {
+   mitre::oss::simcore::bada_utils::AircraftType GetAircraftTypeInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::Mass GetAircraftMassInformation() const override {
+   mitre::oss::simcore::bada_utils::Mass GetAircraftMassInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::FlightEnvelope GetFlightEnvelopeInformation() const override {
+   mitre::oss::simcore::bada_utils::FlightEnvelope GetFlightEnvelopeInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::Aerodynamics GetAerodynamicsInformation() const override {
+   mitre::oss::simcore::bada_utils::Aerodynamics GetAerodynamicsInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::EngineThrust GetEngineThrustInformation() const override {
+   mitre::oss::simcore::bada_utils::EngineThrust GetEngineThrustInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::FuelFlow GetFuelFlowInformation() const override {
+   mitre::oss::simcore::bada_utils::FuelFlow GetFuelFlowInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::GroundMovement GetGroundMovementInformation() const override {
+   mitre::oss::simcore::bada_utils::GroundMovement GetGroundMovementInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::Procedure GetProcedureInformation(unsigned int index) const override {
+   mitre::oss::simcore::bada_utils::Procedure GetProcedureInformation(unsigned int index) const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
-   aaesim::open_source::bada_utils::AircraftPerformance GetAircraftPerformanceInformation() const override {
+   mitre::oss::simcore::bada_utils::AircraftPerformance GetAircraftPerformanceInformation() const override {
       throw std::runtime_error("intentionally unimplemented code: please implement BADA v3.7");
    }
 
