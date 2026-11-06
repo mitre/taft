@@ -37,10 +37,9 @@ and an independent version sequence beginning at `0.0.1`.
 - An aircraft-performance provider and its data for simulation runs. These are
   not required for the public unit tests or `TAFT --version`.
 
-The initialization baseline pins `aircraft_simulation_core` to `1.0.0` and
+TAFT pins `aircraft_simulation_core` to `2.1.2` and
 `fsloader` to `1.1.0`. Input configuration currently uses the inherited fsloader
-text format. Changes to these APIs and input formats are separate development
-work; consult the root
+text format. 
 [CMakeLists.txt](https://github.com/mitre/taft/blob/main/CMakeLists.txt)
 for the actual dependency versions.
 
@@ -87,11 +86,10 @@ and its licensed data are not included in the public repository or release
 packages. Obtain appropriate data and provide the corresponding implementation
 separately.
 
-The inherited
-[FixedMassAircraftPerformance.h reference](https://github.com/mitre/FMACM/blob/master/include/public/FixedMassAircraftPerformance.h)
-is retained pending the planned API refactor. For current interfaces, inspect
-the pinned dependency and the TAFT loader code rather than relying on that
-legacy link.
+Extend the pinned simcore 2.1.2
+[`mitre::oss::simcore::FixedMassAircraftPerformance` interface](https://github.com/mitre/aircraft_simulation_core/blob/2.1.2/include/public/FixedMassAircraftPerformance.h)
+in your provider library. Providers must use compatible simcore types; rebuild
+providers compiled against simcore 1.x before linking them with TAFT.
 
 The existing CMake integration hooks are:
 

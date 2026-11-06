@@ -73,10 +73,10 @@ Report the checks actually run and any environment limitations.
 
 ## Current interfaces and simulation constraints
 
-The initialization baseline pins `aircraft_simulation_core` **1.0.0** and
-`fsloader` **1.1.0**. Inputs currently use fsloader text, not YAML. Dependency/API
-migration and YAML conversion are separate work; do not fold them into unrelated
-cleanup. Do not silently change dependency versions.
+TAFT pins `aircraft_simulation_core` **2.1.2** and `fsloader` **1.1.0**. Simcore
+types use `mitre::oss::simcore`; keep provider-owned namespaces unchanged.
+Inputs currently use fsloader text, not YAML. YAML conversion is separate work;
+do not fold it into unrelated cleanup. Do not silently change dependency versions.
 
 The public `NullAircraftPerformance` implementation throws when used for
 performance calculations. Public unit tests and `--version` work without BADA;
@@ -107,8 +107,8 @@ provider-free demonstration.
   `docs/README.md`, which GitHub Pages publishes automatically from `main:/docs`.
 - Configure the site in `docs/_config.yml`. Keep its `/taft` base path and use
   absolute GitHub URLs for repository files outside the published docs folder.
-- The old `FixedMassAircraftPerformance.h` URL is intentionally deferred until
-  the API refactor. Do not rewrite it as part of a routine link cleanup.
+- Keep the `FixedMassAircraftPerformance.h` documentation link aligned with the
+  pinned simcore version. Optional providers must use compatible simcore types.
 
 Use PRs to advance `main`. Do not merge, tag, publish a release, or change
 repository protection settings unless the current task authorizes it.
