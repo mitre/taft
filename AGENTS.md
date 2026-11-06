@@ -14,7 +14,7 @@ Public builds must not depend on sibling checkouts, MITRE-internal services, or 
 ## Code organization
 
 - `AircraftDynamicsTestFramework/taft.cpp`: CLI entry point and scenario-file loading.
-- `AircraftDynamicsTestFramework/`: scenario execution, loaders, readers, and writers.
+- `AircraftDynamicsTestFramework/`: scenario execution, YAML parsing, builders, readers, and writers.
 - `include/framework/`: framework headers and aircraft builders.
 - `unittest/src/` and `unittest/resources/`: GoogleTest code and public fixtures.
 - `Run_Files/`: inherited scenario templates and CSV examples.
@@ -56,7 +56,6 @@ Useful CMake options:
 | `TAFT_BUILD_EXECUTABLE` | Build the `TAFT` CLI; defaults on. |
 | `TAFT_BUILD_TESTING` | Build unit tests; defaults on for top-level builds. |
 | `TAFT_BADA_TARGET` | Existing BADA provider target supplied by a parent project. |
-| `TAFT_FIM_SAMPLE_ALGORITHM_TARGET` | Existing sample-algorithm target supplied by a parent project. |
 | `mitre::oss::taft::framework` | Framework library alias. |
 | `mitre::oss::taft` | Executable alias. |
 
@@ -73,10 +72,12 @@ Report the checks actually run and any environment limitations.
 
 ## Current interfaces and simulation constraints
 
-TAFT pins `aircraft_simulation_core` **2.1.2** and `fsloader` **1.1.0**. Simcore
-types use `mitre::oss::simcore`; keep provider-owned namespaces unchanged.
-Inputs currently use fsloader text, not YAML. YAML conversion is separate work;
-do not fold it into unrelated cleanup. Do not silently change dependency versions.
+TAFT pins `aircraft_simulation_core` **2.1.2** and `yaml-cpp` **0.9.0**.
+Simcore types use `mitre::oss::simcore`; keep provider-owned namespaces unchanged.
+YAML parsing produces plain configuration records before constructing aircraft.
+Keep yaml-cpp types private to the parser. The standalone build must not depend
+on fsloader or the FIM sample algorithm; do not restore their loading paths.
+Do not silently change dependency versions.
 
 The public `NullAircraftPerformance` implementation throws when used for
 performance calculations. Public unit tests and `--version` work without BADA;
@@ -84,12 +85,19 @@ a full simulation needs a real provider and its data. Do not add licensed BADA
 data, internal providers, private endpoints, or machine-specific paths to the
 public repository.
 
-The CLI accepts one argument: `--version` or a configuration-file path. That
-file begins with a scenario count followed by scenario paths. Paths inside it
-resolve against the working directory. Use `./` or an absolute configuration
-path to avoid the legacy bare-filename lookup. `Run_Files` contains templates,
-including a BADA path and `{actype}` placeholder, rather than an independent
-provider-free demonstration.
+The CLI accepts one argument: `--version` or a run-manifest path. The manifest
+has a nonempty `scenarios` list of scenario YAML paths. Each scenario has a
+nonempty `aircraft` list. Input paths resolve relative to the YAML containing
+them; the command-line path and CSV output resolve from the working directory.
+There is no special bare-filename lookup or legacy text parser. Output names
+use the scenario filename stem for both `.yaml` and `.yml`.
+
+Keep CSV trajectory, truth-weather, ADS-B replay, and speed-command data formats.
+Speed playback and nonnegative pilot delay are generic capabilities. When
+replay has a valid sample it selects IAS; otherwise planned guidance applies.
+`Run_Files` includes a BADA path and aircraft-code placeholder, rather than an
+independent provider-free simulation. Test parsing and builders separately so
+public configuration tests do not require licensed data.
 
 ## CI, releases, and documentation
 

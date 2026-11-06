@@ -1,0 +1,15 @@
+bada_data_path: /path/to/bada
+aircraft:
+  - ac_type: REPLACE_WITH_AIRCRAFT_CODE
+    speed_management_type: pitch
+    initial_time_seconds: 0
+    initial_mass_fraction: 0.5
+    env_csv_file: example-weather.csv
+    env_data_index: time
+    guidance:
+      hfp_csv_file: example-horizontal-path.csv
+      hfp_compute_xy: true
+      vfp_csv_file: example-vertical-profile.csv
+    speed_commands:
+      csv_file: example-speed-commands.csv
+      pilot_delay_seconds: 0
