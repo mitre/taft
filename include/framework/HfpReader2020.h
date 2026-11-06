@@ -35,7 +35,7 @@
 
 namespace mitre::oss::taft {
 
-class HfpReader2020 final : public aaesim::open_source::DataReader {
+class HfpReader2020 final : public mitre::oss::simcore::DataReader {
   public:
    HfpReader2020(std::string file_name, int header_lines);
 
@@ -49,7 +49,7 @@ class HfpReader2020 final : public aaesim::open_source::DataReader {
 
    Units::Length GetDTG();
 
-   aaesim::open_source::HorizontalPath::SegmentType GetSegmentType();
+   mitre::oss::simcore::HorizontalPath::SegmentType GetSegmentType();
 
    Units::UnsignedAngle GetCourse();
 

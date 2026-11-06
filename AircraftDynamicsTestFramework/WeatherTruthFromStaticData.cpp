@@ -33,11 +33,11 @@ WeatherTruthFromStaticData::WeatherTruthFromStaticData()
      m_weather_data_point(),
      m_wind_interpolator(std::make_shared<WindInterpolator>()),
      m_data_index(DataIndexParameter::SIMULATION_TIME) {
-   m_wind = std::static_pointer_cast<Wind>(m_wind_interpolator);
+   m_wind = std::static_pointer_cast<mitre::oss::simcore::Wind>(m_wind_interpolator);
    SetAtmosphere(std::make_shared<ATMOSPHERE_IMPL>());
 }
 
-void WeatherTruthFromStaticData::Update(const aaesim::open_source::SimulationTime &simulation_time,
+void WeatherTruthFromStaticData::Update(const mitre::oss::simcore::SimulationTime &simulation_time,
                                         const Units::Length &current_distance_to_go,
                                         const Units::Length &altitude_msl) {
    if (m_data_index == DataIndexParameter::SIMULATION_TIME) {
@@ -71,15 +71,15 @@ Units::KelvinTemperature WeatherTruthFromStaticData::Initialize(const std::strin
                                                                 DataIndexParameter primary_index) {
    m_data_index = primary_index;
    LoadEnvFile(env_csv_file);
-   Update(aaesim::open_source::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), altitude);
+   Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), altitude);
 
    const ATMOSPHERE_IMPL basic_atm;
    Units::Temperature offset_difference = GetTemperature() - basic_atm.GetTemperature(altitude);
    Units::Temperature offset = basic_atm.GetTemperatureOffset() + offset_difference;
-   std::shared_ptr<Atmosphere> atmosphere_with_offset = std::make_shared<ATMOSPHERE_IMPL>(offset);
+   std::shared_ptr<mitre::oss::simcore::Atmosphere> atmosphere_with_offset = std::make_shared<ATMOSPHERE_IMPL>(offset);
    SetAtmosphere(atmosphere_with_offset);
 
-   Update(aaesim::open_source::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), altitude);
+   Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), altitude);
    return offset;
 }
 

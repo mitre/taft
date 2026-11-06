@@ -35,11 +35,11 @@
 #define ATMOSPHERE_IMPL aaesim::bada::BadaAtmosphere37
 #else
 #include "public/USStandardAtmosphere1976.h"
-#define ATMOSPHERE_IMPL USStandardAtmosphere1976
+#define ATMOSPHERE_IMPL mitre::oss::simcore::USStandardAtmosphere1976
 #endif
 
 namespace mitre::oss::taft {
-class WeatherTruthFromStaticData : public aaesim::open_source::WeatherTruth {
+class WeatherTruthFromStaticData : public mitre::oss::simcore::WeatherTruth {
   public:
    enum DataIndexParameter {
       SIMULATION_TIME,
@@ -60,7 +60,7 @@ class WeatherTruthFromStaticData : public aaesim::open_source::WeatherTruth {
    Units::KelvinTemperature Initialize(const std::string &env_csv_file, const Units::Length &altitude,
                                        DataIndexParameter primary_index);
 
-   void Update(const aaesim::open_source::SimulationTime &simulation_time, const Units::Length &current_distance_to_go,
+   void Update(const mitre::oss::simcore::SimulationTime &simulation_time, const Units::Length &current_distance_to_go,
                const Units::Length &altitude_msl);
 
    void LoadConditionsAt(const Units::Angle latitude, const Units::Angle longitude,
@@ -105,7 +105,7 @@ inline void WeatherTruthFromStaticData::InitializeWithZeros() {
    m_weather_data_points_by_dtg[Units::Infinity()] = data_point;
    m_weather_data_points_by_time[Units::Infinity()] = data_point;
 
-   Update(aaesim::open_source::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), Units::Infinity());
+   Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), Units::Infinity());
 }
 
 inline WeatherTruthFromStaticData WeatherTruthFromStaticData::CreateZeroTruthWind() {

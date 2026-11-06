@@ -26,7 +26,7 @@
 
 namespace mitre::oss::taft {
 
-using namespace aaesim::open_source;
+using namespace mitre::oss::simcore;
 
 log4cplus::Logger GuidanceFromStaticData::m_logger = log4cplus::Logger::getInstance("GuidanceFromStaticData");
 
@@ -47,7 +47,7 @@ GuidanceFromStaticData::GuidanceFromStaticData(const std::vector<HorizontalPath>
      m_estimated_distance_to_go(Units::infinity()),
      m_planned_descent_parameters(planned_descent_parameters) {}
 
-aaesim::open_source::Guidance GuidanceFromStaticData::Update(const aaesim::open_source::AircraftState &state) {
+mitre::oss::simcore::Guidance GuidanceFromStaticData::Update(const mitre::oss::simcore::AircraftState &state) {
    Units::UnsignedAngle estimated_course;
    Units::Length estimated_distance_to_go;
    m_decrementing_distance_calculator.CalculateAlongPathDistanceFromPosition(
@@ -68,15 +68,15 @@ aaesim::open_source::Guidance GuidanceFromStaticData::Update(const aaesim::open_
    return complete_guidance;
 }
 
-aaesim::open_source::Guidance GuidanceFromStaticData::CalculateVerticalGuidance(
-      const aaesim::open_source::AircraftState &state, const Units::MetersLength &estimated_distance_to_go,
+mitre::oss::simcore::Guidance GuidanceFromStaticData::CalculateVerticalGuidance(
+      const mitre::oss::simcore::AircraftState &state, const Units::MetersLength &estimated_distance_to_go,
       const Units::UnsignedAngle &estimated_course) {
-   aaesim::open_source::Guidance vertical_guidance;
+   mitre::oss::simcore::Guidance vertical_guidance;
    vertical_guidance.m_reference_altitude = state.GetAltitudeMsl();
    vertical_guidance.m_vertical_speed = Units::ZERO_SPEED;
    vertical_guidance.m_ias_command = state.GetDynamicsState().v_indicated_airspeed;
    vertical_guidance.m_ground_speed = state.GetGroundSpeed();
-   vertical_guidance.m_active_guidance_phase = aaesim::open_source::GuidanceFlightPhase::CRUISE_DESCENT;
+   vertical_guidance.m_active_guidance_phase = mitre::oss::simcore::GuidanceFlightPhase::CRUISE_DESCENT;
 
    if (estimated_distance_to_go.value() <= fabs(m_vertical_data.m_distance_to_go_meters.back())) {
       double altitude_target;
@@ -111,20 +111,19 @@ aaesim::open_source::Guidance GuidanceFromStaticData::CalculateVerticalGuidance(
       vertical_guidance.m_ias_command = Units::MetersPerSecondSpeed(ias_target);
       vertical_guidance.m_ground_speed = Units::MetersPerSecondSpeed(groundspeed_target);
       if (state.GetAltitudeMsl() >= m_planned_descent_parameters.planned_transition_altitude) {
-         vertical_guidance.SetSelectedSpeed(aaesim::open_source::AircraftSpeed::OfMach(
-               BoundedValue<double, 0, 1>(m_planned_descent_parameters.planned_cruise_mach)));
+         vertical_guidance.SetSelectedSpeedType(SpeedValueType::MACH_SPEED);
+         vertical_guidance.SetMachCommand(BoundedValue<double, 0, 1>(m_planned_descent_parameters.planned_cruise_mach));
       } else {
-         vertical_guidance.SetSelectedSpeed(
-               aaesim::open_source::AircraftSpeed::OfIndicatedAirspeed(vertical_guidance.m_ias_command));
+         vertical_guidance.SetSelectedSpeedType(SpeedValueType::INDICATED_AIR_SPEED);
       }
    }
    return vertical_guidance;
 }
 
-aaesim::open_source::Guidance GuidanceFromStaticData::CalculateHorizontalGuidance(
-      const aaesim::open_source::AircraftState &state, const Units::MetersLength &estimated_distance_to_go,
+mitre::oss::simcore::Guidance GuidanceFromStaticData::CalculateHorizontalGuidance(
+      const mitre::oss::simcore::AircraftState &state, const Units::MetersLength &estimated_distance_to_go,
       const Units::UnsignedAngle &estimated_course) {
-   aaesim::open_source::Guidance horizontal_guidance;
+   mitre::oss::simcore::Guidance horizontal_guidance;
    horizontal_guidance.m_cross_track_error = Units::ZERO_LENGTH;
    horizontal_guidance.m_use_cross_track = false;
    horizontal_guidance.m_reference_bank_angle = Units::ZERO_ANGLE;

@@ -50,8 +50,8 @@ void WindInterpolator::InterpolateWindScalar(Units::Angle lat_in, Units::Angle l
 }
 
 void WindInterpolator::InterpolateWindMatrix(Units::Angle lat_in, Units::Angle lon_in, Units::Length alt_in,
-                                             aaesim::open_source::WindStack &east_west,
-                                             aaesim::open_source::WindStack &north_south) {
+                                             mitre::oss::simcore::WindStack &east_west,
+                                             mitre::oss::simcore::WindStack &north_south) {
    /** Ignore lat/lon, return wind matrix from set weather, centered on alt_in */
    east_west.SetBounds(1, 5);
    north_south.SetBounds(1, 5);

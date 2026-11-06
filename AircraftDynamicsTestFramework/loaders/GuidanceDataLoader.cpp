@@ -18,7 +18,6 @@
 
 #include "framework/GuidanceDataLoader.h"
 
-#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>
@@ -35,28 +34,20 @@
 
 namespace mitre::oss::taft {
 
-using namespace aaesim::open_source;
+using namespace mitre::oss::simcore;
 
 log4cplus::Logger GuidanceDataLoader::m_logger = log4cplus::Logger::getInstance("GuidanceDataLoader");
 
-bool GuidanceDataLoader::load(DecodedStream *input) {
-   double tmp_mach(0), tmp_ias(INT16_MIN), tmp_altitude(INT32_MAX);
-   set_stream(input);
-   register_var("vfp_csv_file", &m_vfp_filename, true);
-   register_var("planned_cruise_mach", &tmp_mach, false);
-   register_var("planned_transition_ias", &tmp_ias, false);
-   register_var("planned_transition_altitude", &tmp_altitude, false);
-   register_var("hfp_csv_file", &m_hfp_filename, false);
-   register_var("hfp_compute_xy", &m_compute_xy, false);
-   register_var("waypoint_sequence", &m_waypoint_sequence_file, false);
-   m_loaded = complete();
-
-   if (tmp_altitude < INT32_MAX)
-      m_planned_descent_parameters.planned_transition_altitude = Units::FeetLength(tmp_altitude);
-   if (tmp_ias > 0) m_planned_descent_parameters.planned_transition_ias = Units::KnotsSpeed(tmp_ias);
-   if (tmp_mach > 0) m_planned_descent_parameters.planned_cruise_mach = tmp_mach;
-
-   return m_loaded;
+GuidanceDataLoader::GuidanceDataLoader(const GuidanceConfiguration &configuration)
+   : m_hfp_filename(configuration.hfp_csv_file.string()),
+     m_vfp_filename(configuration.vfp_csv_file.string()),
+     m_waypoint_sequence_file(configuration.waypoint_sequence_csv_file.string()),
+     m_compute_xy(configuration.hfp_compute_xy) {
+   if (configuration.planned_transition_altitude_feet)
+      m_planned_descent_parameters.planned_transition_altitude =
+            Units::FeetLength(*configuration.planned_transition_altitude_feet);
+   if (configuration.planned_cruise_mach)
+      m_planned_descent_parameters.planned_cruise_mach = *configuration.planned_cruise_mach;
 }
 
 std::shared_ptr<GuidanceFromStaticData> GuidanceDataLoader::BuildGuidanceCalculator() {
@@ -103,21 +94,22 @@ std::pair<std::shared_ptr<TangentPlaneSequence>, std::vector<HorizontalPath>>
    auto tangent_planes = BuildTangentPlane(ordered_waypoints);
 
    struct ZippedData {
-      aaesim::LineOnEllipsoid line;
-      aaesim::LatitudeLongitudePoint next_point;
+      mitre::oss::simcore::LineOnEllipsoid line;
+      mitre::oss::simcore::LatitudeLongitudePoint next_point;
       WaypointSequenceReader::WaypointSequenceRow waypoint_data;
    };
    std::vector<ZippedData> all_lines;
    std::reverse(data.begin(), data.end());
    for (auto loop = 1; loop < data.size(); ++loop) {
-      aaesim::LatitudeLongitudePoint start_point(data[loop - 1].latitude, data[loop - 1].longitude);
-      aaesim::LatitudeLongitudePoint end_point(data[loop].latitude, data[loop].longitude);
-      aaesim::LineOnEllipsoid line = aaesim::LineOnEllipsoid::CreateFromPoints(start_point, end_point);
+      mitre::oss::simcore::LatitudeLongitudePoint start_point(data[loop - 1].latitude, data[loop - 1].longitude);
+      mitre::oss::simcore::LatitudeLongitudePoint end_point(data[loop].latitude, data[loop].longitude);
+      mitre::oss::simcore::LineOnEllipsoid line =
+            mitre::oss::simcore::LineOnEllipsoid::CreateFromPoints(start_point, end_point);
       ZippedData dz;
       dz.line = line;
       dz.waypoint_data = data[loop];
       if (loop < data.size() - 1) {
-         aaesim::LatitudeLongitudePoint next_point(data[loop + 1].latitude, data[loop + 1].longitude);
+         mitre::oss::simcore::LatitudeLongitudePoint next_point(data[loop + 1].latitude, data[loop + 1].longitude);
          dz.next_point = next_point;
       }
       all_lines.push_back(dz);
@@ -157,11 +149,11 @@ std::pair<std::shared_ptr<TangentPlaneSequence>, std::vector<HorizontalPath>>
          HorizontalPath horizontal_path_segment_turn_point;
          horizontal_path_segment_turn_point.m_segment_type = HorizontalPath::TURN;
          const auto next_terminating_point = line_datarow.next_point;
-         aaesim::LineOnEllipsoid inbound_line = line;
-         aaesim::LineOnEllipsoid outbound_line =
-               aaesim::LineOnEllipsoid::CreateFromPoints(line.GetEndPoint(), next_terminating_point);
-         const auto turn_arc = aaesim::GeolibUtils::CreateArcTangentToTwoLines(inbound_line, outbound_line,
-                                                                               terminating_waypoint_info.turn_radius);
+         mitre::oss::simcore::LineOnEllipsoid inbound_line = line;
+         mitre::oss::simcore::LineOnEllipsoid outbound_line =
+               mitre::oss::simcore::LineOnEllipsoid::CreateFromPoints(line.GetEndPoint(), next_terminating_point);
+         const auto turn_arc = mitre::oss::simcore::GeolibUtils::CreateArcTangentToTwoLines(
+               inbound_line, outbound_line, terminating_waypoint_info.turn_radius);
          EarthModel::GeodeticPosition lat_lon_position;
          lat_lon_position.latitude = turn_arc.second.GetStartPoint().GetLatitude();
          lat_lon_position.longitude = turn_arc.second.GetStartPoint().GetLongitude();

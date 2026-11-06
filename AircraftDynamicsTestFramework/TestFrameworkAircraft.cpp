@@ -25,7 +25,7 @@
 namespace mitre::oss::taft {
 
 using namespace std;
-using namespace aaesim::open_source;
+using namespace mitre::oss::simcore;
 
 log4cplus::Logger TestFrameworkAircraft::m_logger =
       log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("TestFrameworkAircraft"));
@@ -45,17 +45,18 @@ bool TestFrameworkAircraft::Update(const SimulationTime &time) {
       return false;
    }
 
-   aaesim::open_source::AircraftState previous_state = m_states.back();
+   mitre::oss::simcore::AircraftState previous_state = m_states.back();
 
    m_weather_truth->Update(time, m_guidance_calculator->GetEstimatedDistanceAlongPath(),
                            previous_state.GetAltitudeMsl());
 
    Guidance current_guidance = m_guidance_calculator->Update(previous_state);
-   m_adsb_receiver->Receive(time, aaesim::open_source::AircraftState());
+   m_adsb_receiver->Receive(time, mitre::oss::simcore::AircraftState());
    Guidance speed_guidance_from_application =
          m_speed_application->Update(time, current_guidance, m_dynamics->GetDynamicsState(), previous_state);
    if (speed_guidance_from_application.IsValid() && speed_guidance_from_application.m_ias_command > Units::ZERO_SPEED) {
       current_guidance.m_ias_command = speed_guidance_from_application.m_ias_command;
+      current_guidance.SetSelectedSpeedType(SpeedValueType::INDICATED_AIR_SPEED);
    }
    AircraftState state_result =
          m_dynamics->Update(m_states.back().GetUniqueId(), time, current_guidance, m_aircraft_control);
@@ -83,19 +84,19 @@ TestFrameworkAircraft::TestFrameworkAircraft(const Builder &builder)
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAircraftPerformance(
-      std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &performance) {
+      std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> &performance) {
    performance_ = performance;
    return this;
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAircraftDynamics(
-      std::shared_ptr<aaesim::open_source::ThreeDOFDynamics> &dynamics) {
+      std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> &dynamics) {
    aircraft_dynamics_model_ = dynamics;
    return this;
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAircraftControl(
-      std::shared_ptr<aaesim::open_source::AircraftControl> &control) {
+      std::shared_ptr<mitre::oss::simcore::AircraftControl> &control) {
    aircraft_control_ = control;
    return this;
 }
@@ -107,7 +108,7 @@ TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithTrueWeather(
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAdsbReceiver(
-      std::shared_ptr<aaesim::open_source::ADSBReceiver> &receiver) {
+      std::shared_ptr<mitre::oss::simcore::ADSBReceiver> &receiver) {
    receiver_ = receiver;
    return this;
 }
@@ -119,13 +120,13 @@ TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithGuidanceCalc
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithFlightDeckApplication(
-      std::shared_ptr<aaesim::open_source::FlightDeckApplication> &speed_application) {
+      std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> &speed_application) {
    speed_application_ = speed_application;
    return this;
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithInitialState(
-      const aaesim::open_source::AircraftState &initial_state) {
+      const mitre::oss::simcore::AircraftState &initial_state) {
    initial_state_ = initial_state;
    return this;
 }

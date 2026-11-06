@@ -16,146 +16,46 @@
 // (c) 2026 The MITRE Corporation. All Rights Reserved.
 // ****************************************************************************
 
-#include <loader/Loadable.h>
-#include <loader/RunFileArchiveDirector.h>
 #include <log4cplus/initializer.h>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <memory>
+#include <cstdlib>
+#include <exception>
 #include <string>
-#include <utility>
-#include <vector>
+#include <iostream>
 
+#include "framework/Configuration.h"
 #include "framework/TestFrameworkScenario.h"
 #include "public/Log4cplusSetup.h"
-#include "public/ScenarioUtils.h"
 
-#define _MAX_PATH 260
 #ifndef TAFT_VERSION
 #define TAFT_VERSION "unknown"
 #endif
 
-namespace mitre::oss::taft {
-
-const std::vector<std::pair<std::string, std::shared_ptr<TestFrameworkScenario>>> LoadConfigurationFile(
-      const std::string &filename);
-
-void ProcessScenarioDescriptions(
-      const std::vector<std::pair<std::string, std::shared_ptr<TestFrameworkScenario>>> &scenarios);
-
-static log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("main"));
-const std::string VERSION_FLAG("--version");
-
-}  // namespace mitre::oss::taft
-
 int main(int argc, char *argv[]) {
-   using namespace mitre::oss::taft;
    log4cplus::Initializer initializer;
-   LoadLoggerProperties();
+   mitre::oss::simcore::LoadLoggerProperties();
+   const auto logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("main"));
    LOG4CPLUS_INFO(logger, "running " << TAFT_VERSION);
-
-   if (argc == 2) {
-      std::string arg1(argv[1]);
-      if (arg1 == VERSION_FLAG) {
-         std::cout << "TAFT version " << TAFT_VERSION << std::endl;
-         return EXIT_SUCCESS;
-      }
-   } else {
-      std::string error_msg = "Invalid number of command line arguments; only one is allowed.";
-      LOG4CPLUS_FATAL(logger, error_msg);
+   if (argc != 2) {
+      LOG4CPLUS_FATAL(logger, "Provide exactly one argument: --version or a run YAML file.");
       return EXIT_FAILURE;
    }
-
-   std::string configuration_filename = argv[1];
-   if (configuration_filename.empty()) {
-      std::string error_msg = "No configuration file provided. Must provide a configuration file.";
-      LOG4CPLUS_FATAL(logger, error_msg);
-      return EXIT_FAILURE;
+   if (std::string(argv[1]) == "--version") {
+      std::cout << "TAFT version " << TAFT_VERSION << std::endl;
+      return EXIT_SUCCESS;
    }
-
    try {
-      auto scenario_descriptions = LoadConfigurationFile(configuration_filename);
-      ProcessScenarioDescriptions(scenario_descriptions);
-      scenario_descriptions.clear();
-   } catch (const std::exception &e) {
-      std::string error_msg = "Error occurred while processing configuration file: " + std::string(e.what());
-      LOG4CPLUS_FATAL(logger, error_msg);
+      const auto run = mitre::oss::taft::LoadRunConfiguration(argv[1]);
+      for (const auto &filename : run.scenario_files) {
+         LOG4CPLUS_INFO(logger, "Processing Scenario File: " << filename.string());
+         mitre::oss::taft::TestFrameworkScenario scenario(mitre::oss::taft::LoadScenarioConfiguration(filename));
+         scenario.SimulateAllIterations();
+      }
+   } catch (const std::exception &error) {
+      LOG4CPLUS_FATAL(logger, error.what());
       return EXIT_FAILURE;
    }
-
    return EXIT_SUCCESS;
 }
-
-namespace mitre::oss::taft {
-
-const std::vector<std::pair<std::string, std::shared_ptr<TestFrameworkScenario>>> LoadConfigurationFile(
-      const std::string &filename) {
-   std::string configuration_filename("");
-   if (filename.find('/') != std::string::npos) {
-      configuration_filename = filename;
-   } else {
-      configuration_filename = "../Run_Files/";
-      configuration_filename += filename.c_str();
-   }
-
-   FILE *fp;
-   fp = fopen(configuration_filename.c_str(), "r");
-   std::vector<std::pair<std::string, std::shared_ptr<TestFrameworkScenario>>> scenarios;
-   if (fp == NULL) {
-      std::string error_msg = "Configuration file " + configuration_filename + " not found.";
-      LOG4CPLUS_FATAL(logger, error_msg);
-      throw std::runtime_error(error_msg);
-   } else {
-      // Get scenario files for the run.
-      int scenario_count;
-      char scenario_filename[300];
-
-      fscanf(fp, "%d", &scenario_count);
-      for (int i = 0; i < scenario_count; ++i) {
-         fscanf(fp, "%299s", scenario_filename);
-         auto new_pair = std::make_pair(scenario_filename, std::make_shared<TestFrameworkScenario>());
-         scenarios.push_back(new_pair);
-      }
-      fclose(fp);
-   }
-   return scenarios;
-}
-
-void ProcessScenarioDescriptions(
-      const std::vector<std::pair<std::string, std::shared_ptr<TestFrameworkScenario>>> &scenarios) {
-   char current_path[_MAX_PATH];
-   getcwd(current_path, _MAX_PATH);
-   const std::string cwd = current_path;
-
-   auto scenario_runner =
-         [cwd](const std::pair<std::string, std::shared_ptr<TestFrameworkScenario>> &scenario_description) {
-            auto scenario_file_name = scenario_description.first;
-            auto scenario = scenario_description.second;
-            LOG4CPLUS_INFO(logger, "Processing Scenario File: " << scenario_file_name << std::endl);
-
-            DecodedStream stream;
-            bool r = stream.open_file(scenario_file_name);
-            if (!r) {
-               std::string msg = std::string("Cannot open file ") + scenario_file_name;
-               LOG4CPLUS_FATAL(logger, msg);
-               throw std::runtime_error(msg);
-            }
-            stream.set_echo(false);
-            stream.set_Local_Path(FilePath(cwd));
-            stream.set_Archive_Director(std::make_shared<RunFileArchiveDirector>());
-            auto scenario_root_name = aaesim::open_source::ScenarioUtils::ResolveScenarioRootName(scenario_file_name);
-            scenario->SetScenarioName(scenario_root_name);
-            scenario->load(&stream);
-            scenario->SimulateAllIterations();
-         };
-   std::for_each(scenarios.begin(), scenarios.end(), scenario_runner);
-}
-
-}  // namespace mitre::oss::taft

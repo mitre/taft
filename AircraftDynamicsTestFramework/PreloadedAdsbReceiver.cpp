@@ -29,50 +29,51 @@
 
 namespace mitre::oss::taft {
 
-PreloadedAdsbReceiver::PreloadedAdsbReceiver(const std::string &ttv_csv_file,
-                                                    std::shared_ptr<TangentPlaneSequence> tangent_plane_sequence)
-   : m_ttv_filename(ttv_csv_file), m_tanget_plane_sequence(tangent_plane_sequence) {}
+PreloadedAdsbReceiver::PreloadedAdsbReceiver(
+      const std::string &traffic_csv_file,
+      std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> tangent_plane_sequence)
+   : m_traffic_filename(traffic_csv_file), m_tanget_plane_sequence(tangent_plane_sequence) {}
 
-aaesim::open_source::ADSBSVReport PreloadedAdsbReceiver::GetCurrentADSBReport(int id) const {
-   if (m_most_recent_adsb_reports.empty()) return aaesim::open_source::ADSBSVReport::EMPTY_REPORT;
+mitre::oss::simcore::ADSBSVReport PreloadedAdsbReceiver::GetCurrentADSBReport(int id) const {
+   if (m_most_recent_adsb_reports.empty()) return mitre::oss::simcore::ADSBSVReport::EMPTY_REPORT;
    return m_most_recent_adsb_reports.at(id);
 }
 
-aaesim::open_source::ADSBSVReport PreloadedAdsbReceiver::GetADSBReportBefore(int id, Units::Time time) const {
+mitre::oss::simcore::ADSBSVReport PreloadedAdsbReceiver::GetADSBReportBefore(int id, Units::Time time) const {
    throw std::runtime_error("Unimplemented GetADSBReportBefore");
 }
 
-const std::vector<aaesim::open_source::ADSBSVReport> &PreloadedAdsbReceiver::GetReportsReceivedByTime(
-      const aaesim::open_source::SimulationTime &time) const {
+const std::vector<mitre::oss::simcore::ADSBSVReport> &PreloadedAdsbReceiver::GetReportsReceivedByTime(
+      const mitre::oss::simcore::SimulationTime &time) const {
    if (m_reports_received_by_time.empty() ||
        m_reports_received_by_time.find(time.GetCycle()) == m_reports_received_by_time.end()) {
-      static std::vector<aaesim::open_source::ADSBSVReport> empty;
+      static std::vector<mitre::oss::simcore::ADSBSVReport> empty;
       return empty;
    }
    return m_reports_received_by_time.at(time.GetCycle());
 }
 
-const std::map<int, std::vector<aaesim::open_source::ADSBSVReport> > &
-      PreloadedAdsbReceiver::GetAllReportsReceived() const {
+const std::map<int, std::vector<mitre::oss::simcore::ADSBSVReport> > &PreloadedAdsbReceiver::GetAllReportsReceived()
+      const {
    return m_all_reports_received;
 }
 
-std::map<int, aaesim::open_source::ADSBSVReport> const PreloadedAdsbReceiver::GetCurrentADSBReport() const {
+std::map<int, mitre::oss::simcore::ADSBSVReport> const PreloadedAdsbReceiver::GetCurrentADSBReport() const {
    return m_most_recent_adsb_reports;
 }
 
 void PreloadedAdsbReceiver::Initialize(Units::Length adsb_reception_range_threshold) {
-   aaesim::open_source::TvReader data_reader(m_ttv_filename, 1);
+   mitre::oss::simcore::TvReader data_reader(m_traffic_filename, 1);
    while (data_reader.Advance()) {
-      EarthModel::GeodeticPosition geo_position;
+      mitre::oss::simcore::EarthModel::GeodeticPosition geo_position;
       geo_position.latitude = data_reader.GetLat();
       geo_position.longitude = data_reader.GetLon();
       geo_position.altitude = data_reader.GetAlt();
-      EarthModel::LocalPositionEnu local_position;
+      mitre::oss::simcore::EarthModel::LocalPositionEnu local_position;
       m_tanget_plane_sequence->ConvertGeodeticToLocal(geo_position, local_position);
 
       const auto report =
-            aaesim::open_source::ADSBSVReport::Builder(data_reader.GetAcid(), data_reader.GetTimeOfReceipt())
+            mitre::oss::simcore::ADSBSVReport::Builder(data_reader.GetAcid(), data_reader.GetTimeOfReceipt())
                   .Position(local_position.x, local_position.y)
                   ->GeodeticPosition(geo_position.latitude, geo_position.longitude)
                   ->AltitudeMsl(geo_position.altitude)
@@ -89,10 +90,10 @@ void PreloadedAdsbReceiver::Initialize(Units::Length adsb_reception_range_thresh
    }
 }
 
-std::map<int, aaesim::open_source::ADSBSVReport> PreloadedAdsbReceiver::Receive(
-      const aaesim::open_source::SimulationTime &time, const aaesim::open_source::AircraftState &state) {
+std::map<int, mitre::oss::simcore::ADSBSVReport> PreloadedAdsbReceiver::Receive(
+      const mitre::oss::simcore::SimulationTime &time, const mitre::oss::simcore::AircraftState &state) {
    auto surveillance_reports = GetReportsReceivedByTime(time);
-   if (surveillance_reports.empty()) return std::map<int, aaesim::open_source::ADSBSVReport>{};
+   if (surveillance_reports.empty()) return std::map<int, mitre::oss::simcore::ADSBSVReport>{};
    m_most_recent_adsb_reports.clear();
    m_most_recent_adsb_reports.insert(
          std::make_pair(surveillance_reports.front().GetId(), surveillance_reports.front()));

@@ -18,13 +18,11 @@
 
 #pragma once
 
-#include <loader/Loadable.h>
 #include <scalar/Angle.h>
 #include <scalar/Length.h>
 
 #include <vector>
 
-#include "public/AircraftIntent.h"
 #include "public/AircraftState.h"
 #include "public/AlongPathDistanceCalculator.h"
 #include "public/Guidance.h"
@@ -35,7 +33,7 @@
 #include "utility/BoundedValue.h"
 
 namespace mitre::oss::taft {
-class GuidanceFromStaticData final : aaesim::open_source::GuidanceCalculator {
+class GuidanceFromStaticData final : mitre::oss::simcore::GuidanceCalculator {
   public:
    struct VerticalData {
       VerticalData()
@@ -56,45 +54,43 @@ class GuidanceFromStaticData final : aaesim::open_source::GuidanceCalculator {
    struct PlannedDescentParameters {
       PlannedDescentParameters()
          : planned_transition_altitude(Units::Infinity()),
-           planned_transition_ias(Units::NegInfinity()),
            planned_cruise_mach(0) {}
       Units::Length planned_transition_altitude;
-      Units::Speed planned_transition_ias;
       double planned_cruise_mach;
    };
 
    GuidanceFromStaticData();
 
-   GuidanceFromStaticData(const std::vector<aaesim::open_source::HorizontalPath> &horizontal_path,
+   GuidanceFromStaticData(const std::vector<mitre::oss::simcore::HorizontalPath> &horizontal_path,
                           const VerticalData &vertical_path,
                           const PlannedDescentParameters &planned_descent_parameters);
 
-   aaesim::open_source::Guidance Update(const aaesim::open_source::AircraftState &state) override;
+   mitre::oss::simcore::Guidance Update(const mitre::oss::simcore::AircraftState &state) override;
 
    const VerticalData &GetVerticalData() const;
 
    const Units::MetersLength GetEstimatedDistanceAlongPath() const;
 
-   const std::vector<aaesim::open_source::HorizontalPath> &GetHorizontalTrajectory() const;
+   const std::vector<mitre::oss::simcore::HorizontalPath> &GetHorizontalTrajectory() const;
 
   private:
    static log4cplus::Logger m_logger;
    enum TurnDirection { LEFT, RIGHT };
 
    TurnDirection GetTurnDirection(const Units::Angle course_change);
-   aaesim::open_source::Guidance CalculateVerticalGuidance(const aaesim::open_source::AircraftState &state,
+   mitre::oss::simcore::Guidance CalculateVerticalGuidance(const mitre::oss::simcore::AircraftState &state,
                                                            const Units::MetersLength &estimated_distance_to_go,
                                                            const Units::UnsignedAngle &estimated_course);
-   aaesim::open_source::Guidance CalculateHorizontalGuidance(const aaesim::open_source::AircraftState &state,
+   mitre::oss::simcore::Guidance CalculateHorizontalGuidance(const mitre::oss::simcore::AircraftState &state,
                                                              const Units::MetersLength &estimated_distance_to_go,
                                                              const Units::UnsignedAngle &estimated_course);
 
    VerticalData m_vertical_data;
-   std::vector<aaesim::open_source::HorizontalPath> m_horizontal_trajectory;
-   aaesim::open_source::AlongPathDistanceCalculator m_decrementing_distance_calculator;
-   aaesim::open_source::PositionCalculator m_decrementing_position_calculator;
+   std::vector<mitre::oss::simcore::HorizontalPath> m_horizontal_trajectory;
+   mitre::oss::simcore::AlongPathDistanceCalculator m_decrementing_distance_calculator;
+   mitre::oss::simcore::PositionCalculator m_decrementing_position_calculator;
    Units::Length m_estimated_distance_to_go;
-   aaesim::open_source::Guidance m_previous_guidance;
+   mitre::oss::simcore::Guidance m_previous_guidance;
    PlannedDescentParameters m_planned_descent_parameters;
 };
 
@@ -102,7 +98,7 @@ inline const Units::MetersLength GuidanceFromStaticData::GetEstimatedDistanceAlo
    return m_estimated_distance_to_go;
 }
 
-inline const std::vector<aaesim::open_source::HorizontalPath> &GuidanceFromStaticData::GetHorizontalTrajectory() const {
+inline const std::vector<mitre::oss::simcore::HorizontalPath> &GuidanceFromStaticData::GetHorizontalTrajectory() const {
    return m_horizontal_trajectory;
 }
 

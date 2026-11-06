@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.29)
-project(taft VERSION 0.0.1 LANGUAGES CXX)
+project(taft VERSION 1.0.0 LANGUAGES CXX)
 
 set (CMAKE_CXX_STANDARD 20)
 
@@ -57,14 +57,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-unused-function -Wno-sign-compare -O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wno-unused-function -Wno-sign-compare -O3 -g3")
 
-if(NOT TARGET mitre::fsloader)
+if(NOT TARGET yaml-cpp::yaml-cpp)
     CPMAddPackage(
-        NAME fsloader
-        GIT_REPOSITORY https://github.com/mitre/fsloader.git
-        GIT_TAG 1.1.0
+        NAME yaml_cpp
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG yaml-cpp-0.9.0
         OPTIONS
-         "FSLOADER_BUILD_EXAMPLE OFF"
-         "BUILD_SHARED_LIBS FALSE"
+         "YAML_BUILD_SHARED_LIBS OFF"
+         "YAML_CPP_BUILD_TESTS OFF"
+         "YAML_CPP_BUILD_TOOLS OFF"
+         "YAML_CPP_INSTALL OFF"
+         "YAML_CPP_FORMAT_SOURCE OFF"
+         "YAML_ENABLE_PIC ON"
     )
 endif()
 
@@ -72,7 +76,7 @@ if(NOT TARGET mitre::oss::simcore)
     CPMAddPackage(
         NAME aircraft_simulation_core
         GIT_REPOSITORY https://github.com/mitre/aircraft_simulation_core.git
-        GIT_TAG 1.0.0
+        GIT_TAG 2.1.2
         OPTIONS
          "SIMCORE_BUILD_TESTING OFF"
     )

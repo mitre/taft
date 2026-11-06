@@ -18,26 +18,16 @@
 
 #pragma once
 
-#include <loader/Loadable.h>
-
-#include <filesystem>
-#include <string>
-#include <vector>
-
+#include "framework/Configuration.h"
 #include "framework/SpeedCommandsFromStaticData.h"
 
 namespace mitre::oss::taft::loader {
-class SpeedCommandsLoader final : public Loadable {
+class SpeedCommandsLoader final {
   public:
-   SpeedCommandsLoader() : m_loaded(false), m_file_path() {}
-   bool load(DecodedStream *input) override;
-   SpeedCommandsFromStaticData Build(Units::Time pilot_delay_duration) const;
-   bool IsLoaded() const { return m_loaded; }
+   explicit SpeedCommandsLoader(const SpeedCommandsConfiguration &configuration);
+   SpeedCommandsFromStaticData Build() const;
 
   private:
-   const std::vector<SpeedCommandsFromStaticData::SpeedRecord> ReadStaticSpeedCommands(
-         const std::string &filename) const;
-   bool m_loaded;
-   std::string m_file_path;
+   SpeedCommandsConfiguration m_configuration;
 };
-}  // namespace mitre::oss::taft::loader
+}

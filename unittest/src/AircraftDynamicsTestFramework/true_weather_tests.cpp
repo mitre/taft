@@ -26,7 +26,7 @@ TEST(WeatherTruthFromStaticData, updated_using_simtime) {
    WeatherTruthFromStaticData test_weather = WeatherTruthFromStaticData();
    test_weather.Initialize("resources/test_env_file.csv", Units::zero(),
                            WeatherTruthFromStaticData::DataIndexParameter::SIMULATION_TIME);
-   test_weather.Update(aaesim::open_source::SimulationTime::Of(Units::SecondsTime(1.0)), Units::zero(), Units::zero());
+   test_weather.Update(mitre::oss::simcore::SimulationTime::Of(Units::SecondsTime(1.0)), Units::zero(), Units::zero());
    Units::KelvinTemperature actual_temp = test_weather.GetTemperature();
    const Units::KelvinTemperature expected_temp(226);
    EXPECT_NEAR(actual_temp.value(), expected_temp.value(), 1e-10);
@@ -36,7 +36,7 @@ TEST(WeatherTruthFromStaticData, updated_using_dtg) {
    WeatherTruthFromStaticData test_weather = WeatherTruthFromStaticData();
    test_weather.Initialize("resources/test_env_file.csv", Units::zero(),
                            WeatherTruthFromStaticData::DataIndexParameter::DISTANCE_TO_GO);
-   test_weather.Update(aaesim::open_source::SimulationTime::Of(Units::ZERO_TIME), Units::MetersLength(900.0),
+   test_weather.Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::MetersLength(900.0),
                        Units::zero());
    Units::KelvinTemperature actual_temp = test_weather.GetTemperature();
    const Units::KelvinTemperature expected_temp(226);
@@ -47,7 +47,7 @@ TEST(WeatherTruthFromStaticData, updated_interpolate_using_dtg) {
    WeatherTruthFromStaticData test_weather = WeatherTruthFromStaticData();
    test_weather.Initialize("resources/test_env_file.csv", Units::zero(),
                            WeatherTruthFromStaticData::DataIndexParameter::DISTANCE_TO_GO);
-   test_weather.Update(aaesim::open_source::SimulationTime::Of(Units::ZERO_TIME), Units::MetersLength(900.0),
+   test_weather.Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::MetersLength(900.0),
                        Units::zero());
    test_weather.LoadConditionsAt(Units::ZERO_ANGLE, Units::ZERO_ANGLE, Units::ZERO_LENGTH);
    Units::KelvinTemperature actual_temp = test_weather.GetTemperature();
@@ -57,7 +57,7 @@ TEST(WeatherTruthFromStaticData, updated_interpolate_using_dtg) {
 
 TEST(WeatherTruthFromStaticData, create_zero) {
    WeatherTruthFromStaticData test_weather = WeatherTruthFromStaticData::CreateZeroTruthWind();
-   test_weather.Update(aaesim::open_source::SimulationTime::Of(Units::ZERO_TIME), Units::zero(), Units::zero());
+   test_weather.Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::zero(), Units::zero());
    Units::KelvinTemperature expected_temp(288.15);
    EXPECT_EQ(test_weather.GetTemperature().value(), expected_temp.value());
 }

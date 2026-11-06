@@ -25,11 +25,11 @@
 #include "public/OutputHandler.h"
 
 namespace mitre::oss::taft {
-class AircraftStateWriter final : public OutputHandler {
+class AircraftStateWriter final : public mitre::oss::simcore::OutputHandler {
   public:
-   AircraftStateWriter() : OutputHandler("", "_AcStates.csv"), m_data_to_write() {}
+   AircraftStateWriter() : mitre::oss::simcore::OutputHandler("", "_AcStates.csv"), m_data_to_write() {}
    void Finish() override;
-   void Gather(std::vector<aaesim::open_source::AircraftState> aircraft_states);
+   void Gather(std::vector<mitre::oss::simcore::AircraftState> aircraft_states);
 
   private:
    static std::vector<std::string> COLUMN_NAMES;

@@ -18,6 +18,9 @@
 
 #include "framework/SpeedCommandsFromStaticData.h"
 
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
 #include <vector>
 
 namespace mitre::oss::taft {
@@ -26,52 +29,55 @@ SpeedCommandsFromStaticData::SpeedCommandsFromStaticData() : m_speed_data(), m_p
 
 SpeedCommandsFromStaticData::SpeedCommandsFromStaticData(
       const std::vector<SpeedCommandsFromStaticData::SpeedRecord> &speed_data, Units::Time pilot_delay_duration)
-   : m_speed_data(speed_data), m_pilot_delay_seconds(pilot_delay_duration) {}
+   : m_speed_data(speed_data), m_pilot_delay_seconds(pilot_delay_duration) {
+   if (!std::isfinite(m_pilot_delay_seconds.value()) || m_pilot_delay_seconds < Units::ZERO_TIME)
+      throw std::invalid_argument("Pilot delay must be finite and nonnegative");
+   if (m_speed_data.size() < 2) throw std::invalid_argument("Speed commands require at least two samples");
+   for (std::size_t i = 0; i < m_speed_data.size(); ++i) {
+      const auto &record = m_speed_data[i];
+      if (!std::isfinite(record.simtime.value()) || !std::isfinite(record.speed_command.value()) ||
+          record.speed_command <= Units::ZERO_SPEED)
+         throw std::invalid_argument("Speed command samples require finite times and positive finite speeds");
+      if (i > 0 && record.simtime <= m_speed_data[i - 1].simtime)
+         throw std::invalid_argument("Speed command times must be strictly increasing");
+   }
+}
 
-aaesim::open_source::Guidance SpeedCommandsFromStaticData::Update(Units::Time time) {
-   aaesim::open_source::Guidance guidance;
+mitre::oss::simcore::Guidance SpeedCommandsFromStaticData::Update(Units::Time time) {
+   mitre::oss::simcore::Guidance guidance;
    guidance.SetValid(false);
 
    const Units::Time lookup_time = time - m_pilot_delay_seconds;
-   if (m_speed_data[0].simtime > lookup_time) {
+   if (!std::isfinite(Units::SecondsTime(lookup_time).value()) || m_speed_data.empty() ||
+       lookup_time < m_speed_data.front().simtime || lookup_time > m_speed_data.back().simtime)
       return guidance;
-   }
 
-   const Units::Time final_time_available = m_speed_data.back().simtime;
-   if (final_time_available < lookup_time) {
-      return guidance;
-   }
-
-   int ix = 0;
-   while ((ix < (m_speed_data.size() - 1)) && (m_speed_data[(ix + 1)].simtime < lookup_time)) {
-      ++ix;
-   }
-
-   if (m_speed_data[(ix + 1)].simtime == lookup_time) {
-      guidance.m_ias_command = Units::FeetPerSecondSpeed(m_speed_data[(ix + 1)].speed_command);
+   const auto upper =
+         std::lower_bound(m_speed_data.begin(), m_speed_data.end(), lookup_time,
+                          [](const SpeedRecord &record, const Units::Time &value) { return record.simtime < value; });
+   if (upper->simtime == lookup_time) {
+      guidance.m_ias_command = upper->speed_command;
    } else {
-      double pct = Units::SecondsTime(time - m_speed_data[ix].simtime).value() /
-                   Units::SecondsTime(m_speed_data[(ix + 1)].simtime - m_speed_data[ix].simtime).value();
-
-      Units::Speed interpolatedspeed =
-            (1.0 - pct) * m_speed_data[ix].speed_command + pct * m_speed_data[(ix + 1)].speed_command;
-
-      guidance.m_ias_command = Units::FeetPerSecondSpeed(interpolatedspeed);
+      const auto &lower = *(upper - 1);
+      const double fraction = Units::SecondsTime(lookup_time - lower.simtime).value() /
+                              Units::SecondsTime(upper->simtime - lower.simtime).value();
+      guidance.m_ias_command = (1.0 - fraction) * lower.speed_command + fraction * upper->speed_command;
    }
+   guidance.SetSelectedSpeedType(SpeedValueType::INDICATED_AIR_SPEED);
    guidance.SetValid(true);
 
    return guidance;
 }
 
 void SpeedCommandsFromStaticData::Initialize(
-      aaesim::open_source::FlightDeckApplicationInitializer &initializer_visitor) {}
+      mitre::oss::simcore::FlightDeckApplicationInitializer &initializer_visitor) {}
 
-aaesim::open_source::Guidance SpeedCommandsFromStaticData::Update(
-      const aaesim::open_source::SimulationTime &simtime, const aaesim::open_source::Guidance &current_guidance,
-      const aaesim::open_source::DynamicsState &dynamics_state, const aaesim::open_source::AircraftState &own_state) {
+mitre::oss::simcore::Guidance SpeedCommandsFromStaticData::Update(
+      const mitre::oss::simcore::SimulationTime &simtime, const mitre::oss::simcore::Guidance &current_guidance,
+      const mitre::oss::simcore::DynamicsState &dynamics_state, const mitre::oss::simcore::AircraftState &own_state) {
    return Update(simtime.GetCurrentSimulationTime());
 }
 
-bool SpeedCommandsFromStaticData::IsActive() const { return true; }
+bool SpeedCommandsFromStaticData::IsActive() const { return !m_speed_data.empty(); }
 
 }  // namespace mitre::oss::taft

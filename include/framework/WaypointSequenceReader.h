@@ -28,7 +28,7 @@
 #include "utility/CustomUnits.h"
 
 namespace mitre::oss::taft {
-class WaypointSequenceReader final : aaesim::open_source::DataReader {
+class WaypointSequenceReader final : mitre::oss::simcore::DataReader {
   public:
    struct WaypointSequenceRow {
       WaypointSequenceRow()

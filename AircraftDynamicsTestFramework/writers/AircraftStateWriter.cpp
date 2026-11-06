@@ -65,8 +65,8 @@ void AircraftStateWriter::Finish() {
    m_data_to_write.clear();
 }
 
-void AircraftStateWriter::Gather(std::vector<aaesim::open_source::AircraftState> aircraft_states) {
-   auto data_gatherer = [this](const aaesim::open_source::AircraftState &state) {
+void AircraftStateWriter::Gather(std::vector<mitre::oss::simcore::AircraftState> aircraft_states) {
+   auto data_gatherer = [this](const mitre::oss::simcore::AircraftState &state) {
       DataToWrite data;
       data.altitude_msl = state.GetAltitudeMsl();
       data.dynamics_altitude_rate = state.GetVerticalSpeed();
