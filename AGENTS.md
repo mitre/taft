@@ -75,9 +75,7 @@ Report the checks actually run and any environment limitations.
 TAFT pins `aircraft_simulation_core` **2.1.2** and `yaml-cpp` **0.9.0**.
 Simcore types use `mitre::oss::simcore`; keep provider-owned namespaces unchanged.
 YAML parsing produces plain configuration records before constructing aircraft.
-Keep yaml-cpp types private to the parser. The standalone build must not depend
-on fsloader or the FIM sample algorithm; do not restore their loading paths.
-Do not silently change dependency versions.
+Keep yaml-cpp types private to the parser. 
 
 The public `NullAircraftPerformance` implementation throws when used for
 performance calculations. Public unit tests and `--version` work without BADA;

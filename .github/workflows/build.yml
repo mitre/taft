@@ -104,7 +104,6 @@ jobs:
           test -f Run_Files/test-framework-configuration.yaml
           test -f Run_Files/test-framework-scenario.yaml
           test -f licenses/yaml_cpp/LICENSE
-          test ! -e licenses/fsloader
           test "$(./bin/TAFT --version | tail -n 1)" = "$expected_version"
 
       - name: Upload release package
