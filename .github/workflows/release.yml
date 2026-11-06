@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags: ['[0-9]*.[0-9]*.[0-9]*', 'v[0-9]*.[0-9]*.[0-9]*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate version, tag, and stable release ancestry
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PYTHON'
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+
+          text = Path('CMakeLists.txt').read_text()
+          text = re.sub(r'#[^\n]*', '', text)
+          versions = re.findall(r'\bproject\s*\(\s*taft\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)\s', text, re.I)
+          if len(versions) != 1:
+              raise SystemExit('Expected one numeric TAFT project version in CMakeLists.txt')
+          tag = os.environ['RELEASE_TAG']
+          subprocess.run(['cmake', '-DPROJECT_VERSION=' + versions[0],
+                          '-DTAFT_RELEASE_TAG=' + tag, '-P', '.cmake/ReleaseVersion.cmake'], check=True)
+          tagged_commit = subprocess.check_output(['git', 'rev-parse', 'refs/tags/' + tag + '^{commit}'], text=True).strip()
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if tagged_commit != head:
+              raise SystemExit('The checkout must be the tagged commit')
+          if '-' not in tag:
+              result = subprocess.run(['git', 'merge-base', '--is-ancestor', tagged_commit, 'origin/main'])
+              if result.returncode:
+                  raise SystemExit('Stable release commit must be reachable from main; use a prerelease tag for branch builds')
+          PYTHON
+
+  packages:
+    needs: validate
+    uses: ./.github/workflows/build.yml
+    with:
+      release-tag: ${{ github.ref_name }}
+
+  publish:
+    name: Publish release
+    needs: [validate, packages]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create source archive and checksums
+        run: |
+          version="${RELEASE_TAG#v}"
+          git archive --format=tar.gz --prefix="taft-$version-source/" \
+            --output="dist/taft-$version-source.tar.gz" HEAD
+          cd dist
+          test "$(find . -maxdepth 1 -name '*.tar.gz' | wc -l)" -eq 4
+          sha256sum ./*.tar.gz > SHA256SUMS
+
+      - name: Prepare complete release
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft > release-state.json 2>/dev/null; then
+            python3 -c 'import json; assert json.load(open("release-state.json"))["isDraft"], "Refusing to overwrite a published release"'
+          else
+            prerelease_args=()
+            if [[ "$RELEASE_TAG" == *-* ]]; then
+              prerelease_args+=(--prerelease)
+            fi
+            gh release create "$RELEASE_TAG" --verify-tag --draft --generate-notes \
+              --title "TAFT ${RELEASE_TAG#v}" "${prerelease_args[@]}"
+          fi
+          gh release upload "$RELEASE_TAG" dist/* --clobber
+
+      - name: Publish release with all packages
+        run: |
+          prerelease=false
+          latest=true
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            prerelease=true
+            latest=false
+          fi
+          gh release edit "$RELEASE_TAG" --draft=false \
+            --prerelease="$prerelease" --latest="$latest"

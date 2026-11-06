@@ -2,61 +2,54 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-latest
-            container: ''
-            install: |
-              brew update
-          - os: ubuntu-latest
-            container: rockylinux:9
-            install: |
-              dnf -y install gcc gcc-c++ make cmake git
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: ${{ matrix.install }}
-
-      - name: Configure and Build
-        run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --target TAFT -j
-          ./build/bin/TAFT --version
-
- 
-
-  run_all_tests:
-    runs-on: ubuntu-latest
-    container:
-      image: rockylinux:9
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          dnf -y install gcc gcc-c++ make cmake git
-
-      - name: Build project
-        run: |
-          cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release
-
-      - name: Run tests
-        run: |
-          cmake --build build --target run_tests -j
-
-      - name: Upload test results
+        with:
+          persist-credentials: false
+      - name: Build GitHub Pages documentation
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+      - name: Check the documentation homepage
+        run: test -s _site/index.html
+      - name: Upload documentation preview
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: build/unittest/*results.xml
+          name: documentation-preview
+          path: _site/
+          if-no-files-found: error
+
+  build-and-test:
+    uses: ./.github/workflows/build.yml
+
+  required:
+    name: CI required
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [docs, build-and-test]
+    steps:
+      - name: Require documentation, builds, tests, and package checks to pass
+        env:
+          DOCS_RESULT: ${{ needs.docs.result }}
+          BUILD_RESULT: ${{ needs.build-and-test.result }}
+        run: |
+          test "$DOCS_RESULT" = success
+          test "$BUILD_RESULT" = success

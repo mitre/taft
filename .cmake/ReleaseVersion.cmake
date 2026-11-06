@@ -1,0 +1,12 @@
+set(TAFT_VERSION "${PROJECT_VERSION}")
+set(TAFT_RELEASE_TAG "" CACHE STRING "Optional Git tag to validate and package")
+
+if(TAFT_RELEASE_TAG)
+    if(NOT TAFT_RELEASE_TAG MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)(-[0-9A-Za-z]+(\\.[0-9A-Za-z]+)*)?$")
+        message(FATAL_ERROR "Invalid TAFT release tag: ${TAFT_RELEASE_TAG}. Use [v]MAJOR.MINOR.PATCH[-PRERELEASE].")
+    endif()
+    if(NOT CMAKE_MATCH_1 STREQUAL PROJECT_VERSION)
+        message(FATAL_ERROR "Release tag ${TAFT_RELEASE_TAG} does not match CMake project version ${PROJECT_VERSION}.")
+    endif()
+    string(REGEX REPLACE "^v" "" TAFT_VERSION "${TAFT_RELEASE_TAG}")
+endif()

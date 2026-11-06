@@ -1,0 +1,20 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+@media screen and (max-width: 720px) {
+  section {
+    overflow-wrap: anywhere;
+  }
+
+  section table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  section pre code {
+    overflow-wrap: normal;
+  }
+}
