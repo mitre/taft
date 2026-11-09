@@ -41,6 +41,7 @@ TestFrameworkAircraft::TestFrameworkAircraft()
      m_states() {}
 
 bool TestFrameworkAircraft::Update(const SimulationTime &time) {
+   if (IsFinished()) return true;
    if (time.GetCurrentSimulationTime() <= m_states.cbegin()->GetTime()) {
       return false;
    }
@@ -51,7 +52,7 @@ bool TestFrameworkAircraft::Update(const SimulationTime &time) {
                            previous_state.GetAltitudeMsl());
 
    Guidance current_guidance = m_guidance_calculator->Update(previous_state);
-   m_adsb_receiver->Receive(time, mitre::oss::simcore::AircraftState());
+   m_adsb_receiver->Receive(time, previous_state);
    Guidance speed_guidance_from_application =
          m_speed_application->Update(time, current_guidance, m_dynamics->GetDynamicsState(), previous_state);
    if (speed_guidance_from_application.IsValid() && speed_guidance_from_application.m_ias_command > Units::ZERO_SPEED) {

@@ -43,6 +43,8 @@ class HfpReader2020 final : public mitre::oss::simcore::DataReader {
 
    virtual ~HfpReader2020();
 
+   double GetDouble(int column) const;
+
    Units::Length GetX();
 
    Units::Length GetY();
@@ -76,8 +78,10 @@ class HfpReader2020 final : public mitre::oss::simcore::DataReader {
    Units::Angle GetTurnCenterLongitude();
 
   private:
+   int GetColumnNumber(const std::string &name);
    void SetColumnIndexesFromHeader(const int header_lines);
 
+   std::string m_source{"HFP stream"};
    int m_x_column;
    int m_y_column;
    int m_dtg_column;

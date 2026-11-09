@@ -44,8 +44,9 @@ namespace mitre::oss::taft {
 
 using namespace mitre::oss::simcore;
 
-FrameworkAircraftLoader::FrameworkAircraftLoader(const AircraftConfiguration &configuration)
-   : m_start_time(configuration.initial_time_seconds),
+FrameworkAircraftLoader::FrameworkAircraftLoader(const AircraftConfiguration &configuration, int aircraft_id)
+   : m_aircraft_id(aircraft_id),
+     m_start_time(configuration.initial_time_seconds),
      m_mass_fraction(configuration.initial_mass_fraction),
      m_ac_type(configuration.ac_type),
      m_speed_management_type(configuration.speed_management_type),
@@ -224,7 +225,7 @@ mitre::oss::simcore::AircraftState FrameworkAircraftLoader::BuildInitialState(
       std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> &dynamics, Units::Time start_time,
       Units::Length initial_altitude, const EarthModel::GeodeticPosition &wgs84_position) {
    std::pair<Units::Speed, Units::Speed> wind_components = dynamics->GetWindComponents();
-   return mitre::oss::simcore::AircraftState::Builder(1, start_time)
+   return mitre::oss::simcore::AircraftState::Builder(m_aircraft_id, start_time)
          .Position(m_initial_local_position.x, m_initial_local_position.y)
          ->Latitude(wgs84_position.latitude)
          ->Longitude(wgs84_position.longitude)

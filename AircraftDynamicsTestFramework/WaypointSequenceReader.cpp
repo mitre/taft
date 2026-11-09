@@ -20,24 +20,19 @@
 
 #include <vector>
 
+#include "framework/NumericCsv.h"
 
 namespace mitre::oss::taft {
 
 std::vector<WaypointSequenceReader::WaypointSequenceRow> WaypointSequenceReader::ReadFile() {
    std::vector<WaypointSequenceRow> data;
-   while (Advance()) {
-      Units::DegreesAngle latitude(GetDouble(0));
-      Units::DegreesAngle longitude(GetDouble(1));
-      Units::DegreesAngle bank_angle(GetDouble(3));
-      Units::MetersLength turn_radius(GetDouble(2));
-
-      WaypointSequenceReader::WaypointSequenceRow data_row;
-      data_row.latitude = latitude;
-      data_row.longitude = longitude;
-      data_row.bank_angle = bank_angle;
-      data_row.turn_radius = turn_radius;
-
-      data.push_back(data_row);
+   for (const auto &row : loader::ReadNumericCsv(m_filename, 4, 2)) {
+      WaypointSequenceRow point;
+      point.latitude = Units::DegreesAngle(row[0]);
+      point.longitude = Units::DegreesAngle(row[1]);
+      point.turn_radius = Units::MetersLength(row[2]);
+      point.bank_angle = Units::DegreesAngle(row[3]);
+      data.push_back(point);
    }
 
    static Units::MetersLength tolerance(1);

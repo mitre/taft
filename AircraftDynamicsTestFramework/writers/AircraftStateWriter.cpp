@@ -19,6 +19,7 @@
 #include "framework/AircraftStateWriter.h"
 
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 namespace mitre::oss::taft {
@@ -35,18 +36,19 @@ void AircraftStateWriter::Finish() {
    mini::csv::ofstream os(filename.c_str());
 
    if (!os.is_open()) {
-      std::string emsg = "Cannot open " + filename;
-      return;
+      throw std::runtime_error("Cannot open output file: " + filename);
    }
 
    os.set_delimiter(',', ",");
 
+   if (m_include_aircraft_id) os << "acid";
    auto column_inserter = [&os](std::string &column_name) { os << column_name; };
    std::for_each(COLUMN_NAMES.begin(), COLUMN_NAMES.end(), column_inserter);
    os << NEWLINE;
 
    os.set_precision(6);
-   auto data_inserter = [&os](const DataToWrite &data_row) {
+   auto data_inserter = [this, &os](const DataToWrite &data_row) {
+      if (m_include_aircraft_id) os << data_row.aircraft_id;
       os << Units::SecondsTime(data_row.simulation_time).value();
       os << Units::MetersPerSecondSpeed(data_row.dynamics_ias).value();
       os << Units::MetersPerSecondSpeed(data_row.dynamics_tas).value();
@@ -62,12 +64,15 @@ void AircraftStateWriter::Finish() {
    std::for_each(m_data_to_write.cbegin(), m_data_to_write.cend(), data_inserter);
 
    os.close();
+   if (os.get_ofstream().fail()) throw std::runtime_error("Failed writing output file: " + filename);
    m_data_to_write.clear();
+   m_finished = true;
 }
 
 void AircraftStateWriter::Gather(std::vector<mitre::oss::simcore::AircraftState> aircraft_states) {
    auto data_gatherer = [this](const mitre::oss::simcore::AircraftState &state) {
       DataToWrite data;
+      data.aircraft_id = state.GetUniqueId();
       data.altitude_msl = state.GetAltitudeMsl();
       data.dynamics_altitude_rate = state.GetVerticalSpeed();
       data.dynamics_ground_speed = state.GetGroundSpeed();

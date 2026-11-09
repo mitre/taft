@@ -47,10 +47,10 @@ int main(int argc, char *argv[]) {
       return EXIT_SUCCESS;
    }
    try {
-      const auto run = mitre::oss::taft::LoadRunConfiguration(argv[1]);
-      for (const auto &filename : run.scenario_files) {
-         LOG4CPLUS_INFO(logger, "Processing Scenario File: " << filename.string());
-         mitre::oss::taft::TestFrameworkScenario scenario(mitre::oss::taft::LoadScenarioConfiguration(filename));
+      const auto configurations = mitre::oss::taft::LoadRunScenarios(argv[1]);
+      for (const auto &configuration : configurations) {
+         LOG4CPLUS_INFO(logger, "Processing Scenario File: " << configuration.source_file.string());
+         mitre::oss::taft::TestFrameworkScenario scenario(configuration);
          scenario.SimulateAllIterations();
       }
    } catch (const std::exception &error) {

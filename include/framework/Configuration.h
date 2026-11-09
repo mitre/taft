@@ -62,6 +62,7 @@ struct ScenarioConfiguration {
    std::string GetScenarioName() const { return source_file.stem().string(); }
 };
 
+std::vector<ScenarioConfiguration> LoadRunScenarios(const std::filesystem::path &filename);
 RunConfiguration LoadRunConfiguration(const std::filesystem::path &filename);
 ScenarioConfiguration LoadScenarioConfiguration(const std::filesystem::path &filename);
 }

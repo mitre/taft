@@ -20,6 +20,8 @@
 
 #include <scalar/AngularSpeed.h>
 
+#include <algorithm>
+#include <stdexcept>
 #include <vector>
 
 #include "public/CoreUtils.h"
@@ -27,6 +29,13 @@
 namespace mitre::oss::taft {
 
 using namespace mitre::oss::simcore;
+
+namespace {
+const std::vector<HorizontalPath> &RequireHorizontalPath(const std::vector<HorizontalPath> &path) {
+   if (path.size() < 2) throw std::runtime_error("Guidance requires at least two horizontal path points");
+   return path;
+}
+}
 
 log4cplus::Logger GuidanceFromStaticData::m_logger = log4cplus::Logger::getInstance("GuidanceFromStaticData");
 
@@ -41,13 +50,20 @@ GuidanceFromStaticData::GuidanceFromStaticData(const std::vector<HorizontalPath>
                                                const VerticalData &vertcal_path,
                                                const PlannedDescentParameters &planned_descent_parameters)
    : m_vertical_data(vertcal_path),
-     m_horizontal_trajectory(horizontal_path),
+     m_horizontal_trajectory(RequireHorizontalPath(horizontal_path)),
      m_decrementing_distance_calculator(m_horizontal_trajectory, TrajectoryIndexProgressionDirection::DECREMENTING),
      m_decrementing_position_calculator(m_horizontal_trajectory, TrajectoryIndexProgressionDirection::DECREMENTING),
      m_estimated_distance_to_go(Units::infinity()),
-     m_planned_descent_parameters(planned_descent_parameters) {}
+     m_planned_descent_parameters(planned_descent_parameters) {
+   const auto count = m_vertical_data.m_distance_to_go_meters.size();
+   if (count < 2 || m_vertical_data.m_altitude_meters.size() != count || m_vertical_data.m_ias_mps.size() != count ||
+       m_vertical_data.m_vertical_speed_mps.size() != count || m_vertical_data.m_ground_speed_mps.size() != count)
+      throw std::runtime_error("Guidance requires matching vertical profile columns with at least two samples");
+}
 
 mitre::oss::simcore::Guidance GuidanceFromStaticData::Update(const mitre::oss::simcore::AircraftState &state) {
+   if (m_horizontal_trajectory.size() < 2 || m_vertical_data.m_distance_to_go_meters.size() < 2)
+      throw std::runtime_error("Guidance has not been initialized");
    Units::UnsignedAngle estimated_course;
    Units::Length estimated_distance_to_go;
    m_decrementing_distance_calculator.CalculateAlongPathDistanceFromPosition(
@@ -86,6 +102,10 @@ mitre::oss::simcore::Guidance GuidanceFromStaticData::CalculateVerticalGuidance(
       int current_trajectory_index =
             CoreUtils::FindNearestIndex(estimated_distance_to_go.value(), m_vertical_data.m_distance_to_go_meters);
 
+      if (current_trajectory_index >= m_vertical_data.m_distance_to_go_meters.size())
+         current_trajectory_index = static_cast<int>(m_vertical_data.m_distance_to_go_meters.size() - 1);
+      if (estimated_distance_to_go.value() <= m_vertical_data.m_distance_to_go_meters.front())
+         current_trajectory_index = 0;
       if (current_trajectory_index == 0) {
          altitude_target = m_vertical_data.m_altitude_meters[current_trajectory_index];
          ias_target = m_vertical_data.m_ias_mps[current_trajectory_index];
@@ -134,9 +154,10 @@ mitre::oss::simcore::Guidance GuidanceFromStaticData::CalculateHorizontalGuidanc
    m_decrementing_position_calculator.CalculatePositionFromAlongPathDistance(
          estimated_distance_to_go, estimated_position_on_path_x, estimated_position_on_path_y, course_at_position);
    auto traj_index = m_decrementing_position_calculator.GetCurrentTrajectoryIndex();
-   if (traj_index == m_horizontal_trajectory.size() - 1) {
-      traj_index--;
-   }
+   if (estimated_distance_to_go <= Units::ZERO_LENGTH)
+      traj_index = 0;
+   else if (traj_index >= m_horizontal_trajectory.size() - 1)
+      traj_index = m_horizontal_trajectory.size() - 2;
 
    horizontal_guidance.m_enu_track_angle = course_at_position;
    if (horizontal_guidance.m_ground_speed <= Units::zero()) horizontal_guidance.m_ground_speed = state.GetGroundSpeed();

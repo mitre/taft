@@ -31,10 +31,11 @@
 namespace mitre::oss::taft {
 class FrameworkAircraftLoader final {
   public:
-   explicit FrameworkAircraftLoader(const AircraftConfiguration &configuration);
+   explicit FrameworkAircraftLoader(const AircraftConfiguration &configuration, int aircraft_id = 1);
    std::shared_ptr<TestFrameworkAircraft> BuildAircraft();
 
   private:
+   int m_aircraft_id;
    int m_start_time{0};
    double m_mass_fraction{0};
    std::string m_ac_type{};

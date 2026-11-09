@@ -43,14 +43,14 @@ TestFrameworkScenario::TestFrameworkScenario(const ScenarioConfiguration &config
    aaesim::bada::Bada3Factory::SetBadaDataPath(configuration.bada_data_path.string(),
                                                mitre::oss::simcore::Atmosphere::AtmosphereType::BADA37);
 #endif
-   for (const auto &aircraft : configuration.aircraft)
-      m_aircraft_in_scenario.push_back(FrameworkAircraftLoader(aircraft).BuildAircraft());
+   int aircraft_id = 1;
+   for (const auto &aircraft : configuration.aircraft) {
+      m_aircraft_in_scenario.push_back(FrameworkAircraftLoader(aircraft, aircraft_id++).BuildAircraft());
+   }
 }
 
 void TestFrameworkScenario::SimulateAllIterations() {
 
-   AircraftStateWriter taft_state_writer;
-   taft_state_writer.SetScenarioName(GetScenarioName());
 
    LOG4CPLUS_INFO(m_logger, "Running TAFT scenario " << GetScenarioName());
    mitre::oss::simcore::SimulationTime time;
@@ -60,12 +60,10 @@ void TestFrameworkScenario::SimulateAllIterations() {
       time.Increment();
    }
    LOG4CPLUS_INFO(m_logger, "TAFT scenario complete; writing data files.");
-   std::for_each(m_aircraft_in_scenario.cbegin(), m_aircraft_in_scenario.cend(),
-                 [&taft_state_writer](const std::shared_ptr<TestFrameworkAircraft> &aircraft) {
-                    taft_state_writer.Gather(aircraft->GetAircraftStates());
-                 });
-
-   taft_state_writer.Finish();
+   AircraftStateWriter writer(m_aircraft_in_scenario.size() > 1);
+   writer.SetScenarioName(GetScenarioName());
+   for (const auto &aircraft : m_aircraft_in_scenario) writer.Gather(aircraft->GetAircraftStates());
+   writer.Finish();
 }
 
 bool TestFrameworkScenario::AdvanceAllAircraft(mitre::oss::simcore::SimulationTime &time) {

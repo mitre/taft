@@ -30,7 +30,7 @@
 #include "public/GeolibUtils.h"
 #include "public/SingleTangentPlaneSequence.h"
 #include "utility/BoundedValue.h"
-#include "utility/CsvParser.h"
+#include "framework/NumericCsv.h"
 
 namespace mitre::oss::taft {
 
@@ -205,64 +205,25 @@ std::shared_ptr<TangentPlaneSequence> GuidanceDataLoader::BuildTangentPlaneFromF
 
 std::shared_ptr<TangentPlaneSequence> GuidanceDataLoader::BuildTangentPlane(
       const std::list<Waypoint> &ordered_waypoints) const {
+   if (ordered_waypoints.size() < 2) throw std::runtime_error("Horizontal path requires at least two waypoints");
    auto shortened_legs = CoreUtils::ShortenLongLegs(ordered_waypoints);
    return std::make_shared<SingleTangentPlaneSequence>(shortened_legs);
 }
 
 GuidanceFromStaticData::VerticalData GuidanceDataLoader::BuildVerticalGuidanceData() const {
-   std::ifstream file(m_vfp_filename.c_str());
-   if (!file.is_open()) {
-      std::string msg = "Vertical trajectory file " + m_vfp_filename + " not found";
-      throw std::runtime_error(msg);
-   }
-
+   const auto rows = loader::ReadNumericCsv(m_vfp_filename, NUM_VERTICAL_TRAJ_FIELDS, 2);
    GuidanceFromStaticData::VerticalData vertical_data;
-   int numhdrs = 0;
-   for (CsvParser::CsvIterator csviter(file); csviter != CsvParser::CsvIterator(); ++csviter) {
-      if (numhdrs < 1) {
-         numhdrs++;
-         continue;
-      }
-
-      if ((*csviter).Size() != NUM_VERTICAL_TRAJ_FIELDS) {
-         std::string msg = "Invalid number of fields found in " + m_vfp_filename + "vertical trajectory file";
-         throw std::runtime_error(msg);
-      }
-
-      for (int vfield = TIME_TO_GO_SEC; vfield != NUM_VERTICAL_TRAJ_FIELDS; vfield++) {
-         std::string fieldstr = (*csviter)[vfield];
-         double val = atof(fieldstr.c_str());
-         switch (static_cast<VerticalFields>(vfield)) {
-            case TIME_TO_GO_SEC:
-               vertical_data.m_time_to_go_sec.push_back(val);
-               break;
-
-            case DISTANCE_TO_GO_VERT_M:
-               vertical_data.m_distance_to_go_meters.push_back(val);
-               break;
-
-            case ALTITUDE_M:
-               vertical_data.m_altitude_meters.push_back(val);
-               break;
-
-            case IAS_MPS:
-               vertical_data.m_ias_mps.push_back(val);
-               break;
-
-            case DOT_ALTITUDE_MPS:
-               vertical_data.m_vertical_speed_mps.push_back(val);
-               break;
-
-            case GS_MPS:
-               vertical_data.m_ground_speed_mps.push_back(val);
-            default:
-               break;
-         }
-      }
+   for (const auto &row : rows) {
+      if ((!vertical_data.m_distance_to_go_meters.empty() &&
+           row[DISTANCE_TO_GO_VERT_M] <= vertical_data.m_distance_to_go_meters.back()))
+         throw std::runtime_error(m_vfp_filename + ": distances must be strictly increasing");
+      vertical_data.m_time_to_go_sec.push_back(row[TIME_TO_GO_SEC]);
+      vertical_data.m_distance_to_go_meters.push_back(row[DISTANCE_TO_GO_VERT_M]);
+      vertical_data.m_altitude_meters.push_back(row[ALTITUDE_M]);
+      vertical_data.m_ias_mps.push_back(row[IAS_MPS]);
+      vertical_data.m_vertical_speed_mps.push_back(row[DOT_ALTITUDE_MPS]);
+      vertical_data.m_ground_speed_mps.push_back(row[GS_MPS]);
    }
-
-   file.close();
-
    return vertical_data;
 }
 

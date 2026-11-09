@@ -67,24 +67,6 @@ class WeatherTruthFromStaticData : public mitre::oss::simcore::WeatherTruth {
                          const Units::Length altitude) override;
 
   private:
-   struct EnvFileRow {
-      EnvFileRow()
-         : simtime_seconds(0),
-           distance_to_go_meters(0),
-           wind_x_enu_mps(0),
-           wind_y_enu_mps(0),
-           wind_dx_dh_hz(0),
-           wind_dy_dh_hz(0),
-           temperature_kelvin(0) {}
-      double simtime_seconds;
-      double distance_to_go_meters;
-      double wind_x_enu_mps;
-      double wind_y_enu_mps;
-      double wind_dx_dh_hz;
-      double wind_dy_dh_hz;
-      double temperature_kelvin;
-   };
-
    void InitializeWithZeros();
    void LoadEnvFile(const std::string &env_csv_file);
    std::map<Units::Time, WindInterpolator::WeatherDataPoint> m_weather_data_points_by_time;
@@ -105,7 +87,7 @@ inline void WeatherTruthFromStaticData::InitializeWithZeros() {
    m_weather_data_points_by_dtg[Units::Infinity()] = data_point;
    m_weather_data_points_by_time[Units::Infinity()] = data_point;
 
-   Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), Units::Infinity());
+   Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), Units::ZERO_LENGTH);
 }
 
 inline WeatherTruthFromStaticData WeatherTruthFromStaticData::CreateZeroTruthWind() {

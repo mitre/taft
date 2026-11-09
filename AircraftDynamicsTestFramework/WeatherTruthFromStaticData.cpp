@@ -22,8 +22,7 @@
 #include <memory>
 #include <string>
 
-#include "MiniCSV/minicsv.h"
-
+#include "framework/NumericCsv.h"
 
 namespace mitre::oss::taft {
 
@@ -40,6 +39,8 @@ WeatherTruthFromStaticData::WeatherTruthFromStaticData()
 void WeatherTruthFromStaticData::Update(const mitre::oss::simcore::SimulationTime &simulation_time,
                                         const Units::Length &current_distance_to_go,
                                         const Units::Length &altitude_msl) {
+   if (m_weather_data_points_by_time.empty() || m_weather_data_points_by_dtg.empty())
+      throw std::runtime_error("Weather data has not been initialized");
    if (m_data_index == DataIndexParameter::SIMULATION_TIME) {
       auto it = m_weather_data_points_by_time.lower_bound(simulation_time.GetCurrentSimulationTime());
       Units::Time t1;
@@ -85,34 +86,18 @@ Units::KelvinTemperature WeatherTruthFromStaticData::Initialize(const std::strin
 
 void WeatherTruthFromStaticData::LoadEnvFile(const std::string &env_csv_file) {
    m_weather_data_points_by_time.clear();
-
-   if (env_csv_file.empty()) {
-      auto msg = "No env_csv_file specified; please load a weather file.";
-      throw std::runtime_error(msg);
+   m_weather_data_points_by_dtg.clear();
+   for (const auto &row : loader::ReadNumericCsv(env_csv_file, 7, 1)) {
+      if (row[6] <= 0) throw std::runtime_error(env_csv_file + ": Kelvin temperature must be positive");
+      WindInterpolator::WeatherDataPoint point;
+      point.Vwx = Units::MetersPerSecondSpeed(row[2]);
+      point.Vwy = Units::MetersPerSecondSpeed(row[3]);
+      point.dVwx_dh = Units::HertzFrequency(row[4]);
+      point.dVwy_dh = Units::HertzFrequency(row[5]);
+      point.temperature = Units::AbsKelvinTemperature(row[6]);
+      m_weather_data_points_by_time[Units::SecondsTime(row[0])] = point;
+      m_weather_data_points_by_dtg[Units::MetersLength(row[1])] = point;
    }
-
-   mini::csv::ifstream input_stream(env_csv_file);
-   input_stream.set_delimiter(',', ",");
-   if (input_stream.is_open()) {
-      input_stream.read_line();
-      while (input_stream.read_line()) {
-         EnvFileRow data_row;
-         input_stream >> data_row.simtime_seconds >> data_row.distance_to_go_meters >> data_row.wind_x_enu_mps >>
-               data_row.wind_y_enu_mps >> data_row.wind_dx_dh_hz >> data_row.wind_dy_dh_hz >>
-               data_row.temperature_kelvin;
-
-         WindInterpolator::WeatherDataPoint data_point;
-         data_point.Vwx = Units::MetersPerSecondSpeed(data_row.wind_x_enu_mps);
-         data_point.Vwy = Units::MetersPerSecondSpeed(data_row.wind_y_enu_mps);
-         data_point.dVwx_dh = Units::HertzFrequency(data_row.wind_dx_dh_hz);
-         data_point.dVwy_dh = Units::HertzFrequency(data_row.wind_dy_dh_hz);
-         data_point.temperature = Units::AbsKelvinTemperature(data_row.temperature_kelvin);
-
-         m_weather_data_points_by_time[Units::SecondsTime(data_row.simtime_seconds)] = data_point;
-         m_weather_data_points_by_dtg[Units::MetersLength(data_row.distance_to_go_meters)] = data_point;
-      }
-   }
-   input_stream.close();
 }
 
 void WeatherTruthFromStaticData::LoadConditionsAt(const Units::Angle latitude, const Units::Angle longitude,

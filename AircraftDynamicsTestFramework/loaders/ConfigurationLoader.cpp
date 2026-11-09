@@ -25,6 +25,7 @@
 #include <initializer_list>
 #include <set>
 #include <stdexcept>
+#include <utility>
 
 namespace mitre::oss::taft {
 namespace {
@@ -183,5 +184,19 @@ ScenarioConfiguration LoadScenarioConfiguration(const std::filesystem::path &fil
    for (std::size_t i = 0; i < root["aircraft"].size(); ++i)
       config.aircraft.push_back(reader.Aircraft(root["aircraft"][i], "aircraft[" + std::to_string(i) + "]"));
    return config;
+}
+std::vector<ScenarioConfiguration> LoadRunScenarios(const std::filesystem::path &filename) {
+   const auto run = LoadRunConfiguration(filename);
+   std::vector<ScenarioConfiguration> configurations;
+   std::set<std::string> output_names;
+   for (const auto &scenario_file : run.scenario_files) {
+      auto configuration = LoadScenarioConfiguration(scenario_file);
+      const auto name = configuration.GetScenarioName();
+      if (!output_names.insert(name).second)
+         throw std::runtime_error(filename.string() + ": duplicate output name: " + name +
+                                  ". Choose distinct scenario filenames.");
+      configurations.push_back(std::move(configuration));
+   }
+   return configurations;
 }
 }
