@@ -124,6 +124,7 @@ aircraft:
     speed_management_type: pitch
     guidance:
       hfp_csv_file: example-horizontal-path.csv
+      hfp_compute_xy: false
       vfp_csv_file: example-vertical-profile.csv
     speed_commands:
       csv_file: example-speed-commands.csv
@@ -146,7 +147,13 @@ The command-line file path resolves from the working directory. Paths inside
 each YAML file resolve relative to that file, including scenario paths in the
 manifest and CSV/provider paths in scenarios. Absolute paths are accepted.
 CSV output remains in the working directory; output names use the scenario
-filename without its `.yaml` or `.yml` extension.
+filename without its `.yaml` or `.yml` extension. Each scenario writes
+`<scenario>_AcStates.csv`. Multi-aircraft runs combine all aircraft in that file
+and prepend an `acid` column.
+IDs start at 1 in YAML aircraft order, and rows are grouped by aircraft with
+increasing times within each aircraft.
+A run rejects colliding output names before simulating; use distinct scenario
+filenames within a manifest.
 
 Aircraft settings:
 
@@ -164,6 +171,9 @@ Aircraft settings:
 
 Guidance requires `vfp_csv_file` and exactly one of `hfp_csv_file` or
 `waypoint_sequence_csv_file`. `hfp_compute_xy` defaults to `true` for HFP data.
+The bundled HFP example uses its stored projected X/Y geometry and sets
+`hfp_compute_xy: false`; its legacy geodetic columns are not consistent with
+that geometry. Use `true` for inputs whose geodetic positions and turn data agree.
 To select Mach at and above a transition altitude, specify both
 `planned_transition_altitude_feet` and `planned_cruise_mach` (in `[0, 1]`).
 Omitting the pair selects IAS guidance throughout the profile.

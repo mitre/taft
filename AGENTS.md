@@ -70,6 +70,22 @@ feasible. For documentation-only edits, validate the Markdown, links, Pages
 configuration, and docs workflow; a simulation rebuild is not normally needed.
 Report the checks actually run and any environment limitations.
 
+### Test ownership
+
+Keep tests with the component whose behavior their assertions verify:
+
+- `configuration_tests.cpp`: YAML records, defaults, paths, validation, and batch naming; no model construction.
+- `guidance_input_tests.cpp`: HFP/VFP/waypoint parsing and guidance construction from inputs.
+- `static_guidance_tests.cpp`: guidance calculations, speed selection, endpoints, and shipped-route integration.
+- `weather_truth_tests.cpp`: weather loading, sample selection, reloads, and zero wind.
+- `adsb_replay_tests.cpp`: traffic loading, report selection, timing, and history.
+- `speed_commands_tests.cpp`: in-memory replay and CSV/application loading in separate suites.
+- `aircraft_state_writer_tests.cpp`: output columns, aircraft identifiers, and write failures.
+
+Keep schema, file-loading, and runtime checks when they protect distinct entry
+points. Share only temporary-file setup in `test_support.h`; keep domain helpers
+local. Do not add duplicate cases to increase test counts.
+
 ## Current interfaces and simulation constraints
 
 TAFT pins `aircraft_simulation_core` **2.1.2** and `yaml-cpp` **0.9.0**.
@@ -89,6 +105,12 @@ nonempty `aircraft` list. Input paths resolve relative to the YAML containing
 them; the command-line path and CSV output resolve from the working directory.
 There is no special bare-filename lookup or legacy text parser. Output names
 use the scenario filename stem for both `.yaml` and `.yml`.
+
+Follow established AAESim application conventions when making shared design
+decisions; check the related implementation before assuming its behavior.
+Scenario output is one `<scenario>_AcStates.csv`. Multi-aircraft runs prepend
+an `acid` column with IDs starting at 1 in YAML order; single-aircraft runs
+retain their existing ten columns.
 
 Keep CSV trajectory, truth-weather, ADS-B replay, and speed-command data formats.
 Speed playback and nonnegative pilot delay are generic capabilities. When
