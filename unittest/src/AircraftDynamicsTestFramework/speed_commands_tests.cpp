@@ -18,17 +18,18 @@
 
 #include "framework/SpeedCommandsFromStaticData.h"
 
-#include <chrono>
 #include <filesystem>
-#include <fstream>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "framework/ApplicationLoader.h"
-#include "gtest/gtest.h"
+#include "framework/Configuration.h"
+#include "framework/SpeedCommandsLoader.h"
+#include "test_support.h"
 
 namespace mitre::oss::taft::test {
 namespace {
@@ -53,6 +54,7 @@ TEST(SpeedReplayTest, InterpolatesAndIncludesBothEndpoints) {
    SpeedCommandsFromStaticData replay({Record(10, 100), Record(20, 120), Record(30, 160)}, Units::SecondsTime(0));
    for (const auto &sample :
         std::vector<std::pair<double, double>>{{10, 100}, {15, 110}, {20, 120}, {25, 140}, {30, 160}}) {
+      SCOPED_TRACE(sample.first);
       const auto command = Update(replay, sample.first);
       EXPECT_TRUE(command.IsValid());
       EXPECT_EQ(command.GetSelectedSpeedType(), SpeedValueType::INDICATED_AIR_SPEED);
@@ -84,40 +86,37 @@ TEST(SpeedReplayTest, DefaultAndAbsentApplicationsAreInactive) {
 TEST(SpeedReplayTest, RejectsInvalidSamplesAndDelay) {
    const double nan = std::numeric_limits<double>::quiet_NaN();
    const double inf = std::numeric_limits<double>::infinity();
-   const std::vector<std::vector<SpeedCommandsFromStaticData::SpeedRecord>> invalid = {
-         {},
-         {Record(0, 100)},
-         {Record(0, 100), Record(0, 120)},
-         {Record(1, 100), Record(0, 120)},
-         {Record(nan, 100), Record(1, 120)},
-         {Record(0, 100), Record(inf, 120)},
-         {Record(0, -1), Record(1, 120)},
-         {Record(0, 0), Record(1, 120)},
-         {Record(0, 100), Record(1, nan)},
-         {Record(0, inf), Record(1, 120)}};
-   for (const auto &records : invalid)
+   const std::vector<std::pair<const char *, std::vector<SpeedCommandsFromStaticData::SpeedRecord>>> invalid = {
+         {"empty", {}},
+         {"single sample", {Record(0, 100)}},
+         {"duplicate times", {Record(0, 100), Record(0, 120)}},
+         {"decreasing times", {Record(1, 100), Record(0, 120)}},
+         {"NaN time", {Record(nan, 100), Record(1, 120)}},
+         {"infinite time", {Record(0, 100), Record(inf, 120)}},
+         {"negative speed", {Record(0, -1), Record(1, 120)}},
+         {"zero speed", {Record(0, 0), Record(1, 120)}},
+         {"NaN speed", {Record(0, 100), Record(1, nan)}},
+         {"infinite speed", {Record(0, inf), Record(1, 120)}}};
+   for (const auto &[label, records] : invalid) {
+      SCOPED_TRACE(label);
       EXPECT_THROW(SpeedCommandsFromStaticData(records, Units::SecondsTime(0)), std::invalid_argument);
-   for (double delay : {-1.0, nan, inf})
+   }
+   for (double delay : {-1.0, nan, inf}) {
+      SCOPED_TRACE(delay);
       EXPECT_THROW((SpeedCommandsFromStaticData({Record(0, 100), Record(1, 120)}, Units::SecondsTime(delay))),
                    std::invalid_argument);
+   }
 }
 
-class SpeedFileTest : public ::testing::Test {
+class SpeedCommandsLoaderTest : public TemporaryDirectoryTest {
   protected:
-   void SetUp() override {
-      filename = std::filesystem::temp_directory_path() /
-                 ("taft-speed-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".csv");
-   }
-   void TearDown() override { std::filesystem::remove(filename); }
-   void Write(const std::string &text) { std::ofstream(filename) << text; }
    std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> Load(double delay = 0) {
-      return ApplicationLoader(SpeedCommandsConfiguration{filename, delay}).CreateApplication();
+      return ApplicationLoader(SpeedCommandsConfiguration{directory / "speeds.csv", delay}).CreateApplication();
    }
-   std::filesystem::path filename;
 };
 
-TEST_F(SpeedFileTest, CreatesReplayAndOverridesMachSelection) {
-   Write("Time(sec),Vias_c(m/s)\n10,100\n20,120");
+TEST_F(SpeedCommandsLoaderTest, CreatesReplayAndOverridesMachSelection) {
+   Write("speeds.csv", "Time(sec),Vias_c(m/s)\n10,100\n20,120");
    const auto application = Load(2);
    ASSERT_TRUE(application->IsActive());
    const auto command = Update(*application, 17);
@@ -126,24 +125,38 @@ TEST_F(SpeedFileTest, CreatesReplayAndOverridesMachSelection) {
    EXPECT_NEAR(Units::MetersPerSecondSpeed(command.m_ias_command).value(), 110, 1e-9);
 }
 
-TEST_F(SpeedFileTest, ReportsMissingCsv) {
+TEST_F(SpeedCommandsLoaderTest, ReportsMissingCsv) {
    try {
       Load();
       FAIL() << "Expected missing-file error";
    } catch (const std::runtime_error &error) {
-      EXPECT_NE(std::string(error.what()).find(filename.string()), std::string::npos);
+      EXPECT_NE(std::string(error.what()).find((directory / "speeds.csv").string()), std::string::npos);
    }
 }
 
-TEST_F(SpeedFileTest, RejectsMalformedAndInsufficientCsvData) {
+TEST_F(SpeedCommandsLoaderTest, RejectsMalformedAndInsufficientCsvData) {
    for (const auto &contents : {"", "time,speed\n", "time,speed\n0,100\n", "time,speed\n0,bad\n1,120\n",
                                 "time,speed\n0,100,extra\n1,120\n", "time,speed\n0,100\n0,120\n"}) {
-      Write(contents);
+      SCOPED_TRACE(contents);
+      Write("speeds.csv", contents);
       try {
          Load();
          FAIL() << "Expected invalid CSV error";
       } catch (const std::runtime_error &error) {
-         EXPECT_NE(std::string(error.what()).find(filename.string()), std::string::npos);
+         EXPECT_NE(std::string(error.what()).find((directory / "speeds.csv").string()), std::string::npos);
+      }
+   }
+}
+
+TEST_F(SpeedCommandsLoaderTest, LoadsShippedSpeedCommands) {
+   const auto run =
+         LoadRunConfiguration(std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/test-framework-configuration.yaml");
+   for (const auto &filename : run.scenario_files) {
+      SCOPED_TRACE(filename.string());
+      const auto configuration = LoadScenarioConfiguration(filename);
+      for (const auto &aircraft : configuration.aircraft) {
+         if (aircraft.speed_commands)
+            EXPECT_TRUE(loader::SpeedCommandsLoader(*aircraft.speed_commands).Build().IsActive());
       }
    }
 }

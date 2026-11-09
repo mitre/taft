@@ -18,17 +18,12 @@
 
 #include "framework/Configuration.h"
 
-#include <chrono>
-#include <cmath>
 #include <filesystem>
-#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
 
-#include "framework/GuidanceDataLoader.h"
-#include "framework/SpeedCommandsLoader.h"
-#include "gtest/gtest.h"
+#include "test_support.h"
 
 namespace mitre::oss::taft::test {
 namespace {
@@ -58,23 +53,7 @@ class WorkingDirectory {
 };
 }
 
-class ConfigurationTest : public ::testing::Test {
-  protected:
-   void SetUp() override {
-      directory = std::filesystem::temp_directory_path() /
-                  ("taft-yaml-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-      std::filesystem::create_directories(directory);
-   }
-   void TearDown() override { std::filesystem::remove_all(directory); }
-   std::filesystem::path Write(const std::string &name, const std::string &text) {
-      const auto path = directory / name;
-      std::filesystem::create_directories(path.parent_path());
-      std::ofstream stream(path);
-      stream << text;
-      return path;
-   }
-   std::filesystem::path directory;
-};
+class ConfigurationTest : public TemporaryDirectoryTest {};
 
 TEST_F(ConfigurationTest, AppliesDefaultsWithoutConstructingAircraft) {
    const auto path = Write("scenario.yaml", scenario_yaml);
@@ -165,50 +144,14 @@ TEST_F(ConfigurationTest, DefaultsReplayDelayToZero) {
    EXPECT_DOUBLE_EQ(config.aircraft.front().speed_commands->pilot_delay_seconds, 0);
 }
 
-TEST_F(ConfigurationTest, LoadsShippedExamplesWithoutPerformanceData) {
+TEST_F(ConfigurationTest, ParsesShippedExamplesWithoutConstructingModels) {
    const auto run =
          LoadRunConfiguration(std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/test-framework-configuration.yaml");
    ASSERT_FALSE(run.scenario_files.empty());
    for (const auto &filename : run.scenario_files) {
+      SCOPED_TRACE(filename.string());
       const auto config = LoadScenarioConfiguration(filename);
       ASSERT_FALSE(config.aircraft.empty());
-      for (const auto &aircraft : config.aircraft) {
-         GuidanceDataLoader guidance(aircraft.guidance);
-         const auto calculator = guidance.BuildGuidanceCalculator();
-         EXPECT_FALSE(calculator->GetHorizontalTrajectory().empty());
-         EXPECT_FALSE(calculator->GetVerticalData().m_ias_mps.empty());
-         if (aircraft.speed_commands)
-            EXPECT_TRUE(loader::SpeedCommandsLoader(*aircraft.speed_commands).Build().IsActive());
-      }
-   }
-}
-
-TEST_F(ConfigurationTest, ComputesFiniteGuidanceOnTheShippedCurvedRoute) {
-   const auto configuration =
-         LoadScenarioConfiguration(std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/test-framework-scenario.yaml");
-   GuidanceDataLoader loader(configuration.aircraft.front().guidance);
-   const auto calculator = loader.BuildGuidanceCalculator();
-   const auto &path = calculator->GetHorizontalTrajectory();
-   ASSERT_FALSE(path.empty());
-   mitre::oss::simcore::PositionCalculator position(
-         path, mitre::oss::simcore::TrajectoryIndexProgressionDirection::DECREMENTING);
-   for (double distance = path.back().m_path_length_cumulative_meters - 1; distance > 0; distance -= 1000) {
-      SCOPED_TRACE(distance);
-      Units::Length x, y;
-      Units::UnsignedAngle course;
-      ASSERT_TRUE(position.CalculatePositionFromAlongPathDistance(Units::MetersLength(distance), x, y, course));
-      const auto state = mitre::oss::simcore::AircraftState::Builder(1, Units::SecondsTime(0))
-                               .Position(x, y)
-                               ->AltitudeMsl(Units::MetersLength(5000))
-                               ->GroundSpeed(Units::MetersPerSecondSpeed(200), Units::MetersPerSecondSpeed(0))
-                               ->Build();
-      const auto guidance = calculator->Update(state);
-      ASSERT_TRUE(guidance.IsValid());
-      ASSERT_TRUE(std::isfinite(Units::MetersLength(guidance.m_cross_track_error).value()));
-      ASSERT_TRUE(std::isfinite(Units::RadiansAngle(guidance.m_enu_track_angle).value()));
-      ASSERT_TRUE(std::isfinite(Units::RadiansAngle(guidance.m_reference_bank_angle).value()));
-      ASSERT_NEAR(Units::MetersLength(guidance.m_cross_track_error).value(), 0, 0.1);
-      EXPECT_NEAR(calculator->GetEstimatedDistanceAlongPath().value(), distance, 0.1);
    }
 }
 
@@ -222,10 +165,27 @@ TEST_F(ConfigurationTest, ReportsMissingFile) {
    }
 }
 
+TEST_F(ConfigurationTest, RejectsCollidingOutputNamesBeforeSimulation) {
+   const std::string scenario = scenario_yaml;
+   std::filesystem::create_directories(directory / "a");
+   std::filesystem::create_directories(directory / "b");
+   Write("a/scenario.yaml", scenario);
+   Write("b/scenario.yaml", scenario);
+   const auto manifest = Write("run.yaml", "scenarios: [a/scenario.yaml, b/scenario.yaml]\n");
+   ASSERT_NO_THROW(LoadScenarioConfiguration(directory / "a/scenario.yaml"));
+   try {
+      LoadRunScenarios(manifest);
+      FAIL() << "Expected duplicate output-name error";
+   } catch (const std::runtime_error &error) {
+      EXPECT_NE(std::string(error.what()).find("duplicate output name"), std::string::npos) << error.what();
+   }
+}
+
 class InvalidScenarioTest : public ConfigurationTest,
                             public ::testing::WithParamInterface<std::pair<std::string, std::string>> {};
 
 TEST_P(InvalidScenarioTest, RejectsInputWithFileAndFieldContext) {
+   SCOPED_TRACE(GetParam().first);
    const auto filename = Write("invalid.yaml", GetParam().first);
    try {
       LoadScenarioConfiguration(filename);
@@ -284,6 +244,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 class InvalidRunTest : public ConfigurationTest, public ::testing::WithParamInterface<std::string> {};
 TEST_P(InvalidRunTest, RejectsMalformedManifest) {
+   SCOPED_TRACE(GetParam());
    const auto filename = Write("run.yaml", GetParam());
    EXPECT_THROW(LoadRunConfiguration(filename), std::runtime_error);
 }

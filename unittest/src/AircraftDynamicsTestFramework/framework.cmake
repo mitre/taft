@@ -5,10 +5,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 set(TAFT_TEST_SOURCE
    ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/configuration_tests.cpp
+   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/guidance_input_tests.cpp
+   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/static_guidance_tests.cpp
+   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/weather_truth_tests.cpp
+   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/adsb_replay_tests.cpp
    ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/speed_commands_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/framework_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/true_weather_tests.cpp
+   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/aircraft_state_writer_tests.cpp
 )
+
 set(TAFT_TEST_OUTPUT_DIR ${PROJECT_BINARY_DIR}/unittest/bin)
 add_executable(taft_test
    ${TAFT_TEST_SOURCE}
