@@ -8,7 +8,7 @@ aircraft:
     env_data_index: time
     guidance:
       hfp_csv_file: example-horizontal-path.csv
-      hfp_compute_xy: true
+      hfp_compute_xy: false
       vfp_csv_file: example-vertical-profile.csv
     speed_commands:
       csv_file: example-speed-commands.csv
