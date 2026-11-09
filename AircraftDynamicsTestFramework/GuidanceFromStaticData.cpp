@@ -132,7 +132,7 @@ mitre::oss::simcore::Guidance GuidanceFromStaticData::CalculateHorizontalGuidanc
    Units::UnsignedAngle course_at_position;
    Units::MetersLength estimated_position_on_path_x, estimated_position_on_path_y;
    m_decrementing_position_calculator.CalculatePositionFromAlongPathDistance(
-         m_estimated_distance_to_go, estimated_position_on_path_x, estimated_position_on_path_y, course_at_position);
+         estimated_distance_to_go, estimated_position_on_path_x, estimated_position_on_path_y, course_at_position);
    auto traj_index = m_decrementing_position_calculator.GetCurrentTrajectoryIndex();
    if (traj_index == m_horizontal_trajectory.size() - 1) {
       traj_index--;
@@ -152,7 +152,7 @@ mitre::oss::simcore::Guidance GuidanceFromStaticData::CalculateHorizontalGuidanc
                        Units::MetersLength(m_horizontal_trajectory[traj_index].m_turn_info.y_position_meters)));
 
       Units::FeetLength distance_to_waypoint =
-            m_estimated_distance_to_go -
+            estimated_distance_to_go -
             Units::MetersLength(m_horizontal_trajectory[traj_index].m_path_length_cumulative_meters);
       Units::SecondsTime time_to_waypoint = distance_to_waypoint / horizontal_guidance.m_ground_speed;
 

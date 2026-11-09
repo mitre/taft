@@ -85,8 +85,8 @@ TEST_F(StaticGuidanceTest, SelectsPlannedMachAtAndAboveTransitionAltitude) {
 }
 
 TEST_F(StaticGuidanceTest, PreservesProfileValuesAtSamples) {
-   for (double distance : {0.0, 1000.0, 2000.0}) {
-      auto calculator = CreateGuidance();
+   auto calculator = CreateGuidance();
+   for (double distance : {2000.0, 1000.0, 0.0}) {
       const auto guidance = calculator.Update(CreateState(distance, 1999));
 
       EXPECT_TRUE(guidance.IsValid());

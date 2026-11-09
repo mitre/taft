@@ -19,6 +19,7 @@
 #include "framework/Configuration.h"
 
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
@@ -179,6 +180,35 @@ TEST_F(ConfigurationTest, LoadsShippedExamplesWithoutPerformanceData) {
          if (aircraft.speed_commands)
             EXPECT_TRUE(loader::SpeedCommandsLoader(*aircraft.speed_commands).Build().IsActive());
       }
+   }
+}
+
+TEST_F(ConfigurationTest, ComputesFiniteGuidanceOnTheShippedCurvedRoute) {
+   const auto configuration =
+         LoadScenarioConfiguration(std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/test-framework-scenario.yaml");
+   GuidanceDataLoader loader(configuration.aircraft.front().guidance);
+   const auto calculator = loader.BuildGuidanceCalculator();
+   const auto &path = calculator->GetHorizontalTrajectory();
+   ASSERT_FALSE(path.empty());
+   mitre::oss::simcore::PositionCalculator position(
+         path, mitre::oss::simcore::TrajectoryIndexProgressionDirection::DECREMENTING);
+   for (double distance = path.back().m_path_length_cumulative_meters - 1; distance > 0; distance -= 1000) {
+      SCOPED_TRACE(distance);
+      Units::Length x, y;
+      Units::UnsignedAngle course;
+      ASSERT_TRUE(position.CalculatePositionFromAlongPathDistance(Units::MetersLength(distance), x, y, course));
+      const auto state = mitre::oss::simcore::AircraftState::Builder(1, Units::SecondsTime(0))
+                               .Position(x, y)
+                               ->AltitudeMsl(Units::MetersLength(5000))
+                               ->GroundSpeed(Units::MetersPerSecondSpeed(200), Units::MetersPerSecondSpeed(0))
+                               ->Build();
+      const auto guidance = calculator->Update(state);
+      ASSERT_TRUE(guidance.IsValid());
+      ASSERT_TRUE(std::isfinite(Units::MetersLength(guidance.m_cross_track_error).value()));
+      ASSERT_TRUE(std::isfinite(Units::RadiansAngle(guidance.m_enu_track_angle).value()));
+      ASSERT_TRUE(std::isfinite(Units::RadiansAngle(guidance.m_reference_bank_angle).value()));
+      ASSERT_NEAR(Units::MetersLength(guidance.m_cross_track_error).value(), 0, 0.1);
+      EXPECT_NEAR(calculator->GetEstimatedDistanceAlongPath().value(), distance, 0.1);
    }
 }
 
