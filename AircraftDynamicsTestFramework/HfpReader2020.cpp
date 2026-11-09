@@ -17,6 +17,7 @@
 // ****************************************************************************
 
 #include "framework/HfpReader2020.h"
+#include "framework/NumericCsv.h"
 
 #include <public/HorizontalPath.h>
 
@@ -30,7 +31,8 @@ namespace mitre::oss::taft {
 using namespace mitre::oss::simcore;
 
 HfpReader2020::HfpReader2020(std::string file_name, int header_lines)
-   : DataReader(std::move(file_name), 0, 0),
+   : DataReader(file_name, 0, 0),
+     m_source(file_name),
      m_x_column(),
      m_y_column(),
      m_dtg_column(),
@@ -57,18 +59,31 @@ HfpReader2020::HfpReader2020(std::shared_ptr<std::istream> input_stream, int hea
 
 HfpReader2020::~HfpReader2020() = default;
 
+double HfpReader2020::GetDouble(int column) const {
+   return loader::ReadFiniteNumber(GetString(column), m_source + ": column " + std::to_string(column + 1));
+}
+
+int HfpReader2020::GetColumnNumber(const std::string &name) {
+   for (std::size_t column = 0; column < GetColumnCount(); ++column) {
+      auto actual = GetString(column);
+      if (!actual.empty() && actual.back() == '\r') actual.pop_back();
+      if (actual == name) return static_cast<int>(column);
+   }
+   throw std::runtime_error(m_source + ": missing required column: " + name);
+}
+
 void HfpReader2020::SetColumnIndexesFromHeader(const int header_lines) {
    if (header_lines < 1) {
       throw std::logic_error("Headers are required for HfpReader2020.");
    }
 
    int line_number = 0;
-   Advance();  // first header line
+   if (!Advance()) throw std::runtime_error(m_source + ": missing HFP header");
 
    // Meaningful HPF headers are at least 4 characters; first column is normally 5.
-   while (GetString(0).length() < 3 && line_number < header_lines) {
+   while ((GetColumnCount() == 0 || GetString(0).length() < 3) && line_number < header_lines) {
       line_number++;
-      Advance();
+      if (!Advance()) throw std::runtime_error(m_source + ": missing HFP header");
    }
 
    if (line_number == header_lines) {
