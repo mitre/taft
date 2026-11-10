@@ -1,0 +1,125 @@
+// ****************************************************************************
+// NOTICE
+//
+// This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
+// Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
+// Management System Clause 3.5-13, Rights In Data-General (Oct. 2014), Alt. III and Alt. IV (Jan.
+// 2009).
+
+// No other use other than that granted to the U. S. Government, or to those acting on behalf of
+// the U. S. Government, under that Clause is authorized without the express written permission of The
+// MITRE Corporation.
+
+// For further information, please contact The MITRE Corporation, Contracts
+// Management Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
+//
+// (c) 2026 The MITRE Corporation. All Rights Reserved.
+// ****************************************************************************
+
+#include "framework/WeatherTruthFromStaticData.h"
+
+#include <algorithm>
+#include <memory>
+#include <string>
+
+#include "framework/NumericCsv.h"
+
+namespace mitre::oss::taft {
+
+WeatherTruthFromStaticData::WeatherTruthFromStaticData()
+   : m_weather_data_points_by_time(),
+     m_weather_data_points_by_dtg(),
+     m_weather_data_point(),
+     m_wind_interpolator(std::make_shared<WindInterpolator>()),
+     m_data_index(DataIndexParameter::SIMULATION_TIME) {
+   m_wind = std::static_pointer_cast<mitre::oss::simcore::Wind>(m_wind_interpolator);
+   SetAtmosphere(std::make_shared<ATMOSPHERE_IMPL>());
+}
+
+void WeatherTruthFromStaticData::Update(const mitre::oss::simcore::SimulationTime &simulation_time,
+                                        const Units::Length &current_distance_to_go,
+                                        const Units::Length &altitude_msl) {
+   if (m_weather_data_points_by_time.empty() || m_weather_data_points_by_dtg.empty())
+      throw std::runtime_error("Weather data has not been initialized");
+   if (m_data_index == DataIndexParameter::SIMULATION_TIME) {
+      auto it = m_weather_data_points_by_time.lower_bound(simulation_time.GetCurrentSimulationTime());
+      Units::Time t1;
+      if (it == m_weather_data_points_by_time.end()) {
+         auto rit = m_weather_data_points_by_time.rbegin();
+         t1 = rit->first;
+      } else {
+         t1 = it->first;
+      }
+      m_weather_data_point = m_weather_data_points_by_time[t1];
+   } else {
+      auto it = m_weather_data_points_by_dtg.lower_bound(current_distance_to_go);
+      Units::Length dtg1;
+      if (it == m_weather_data_points_by_dtg.end()) {
+         auto rit = m_weather_data_points_by_dtg.rbegin();
+         dtg1 = rit->first;
+      } else {
+         dtg1 = it->first;
+      }
+      m_weather_data_point = m_weather_data_points_by_dtg[dtg1];
+   }
+   m_temperature = Units::KelvinTemperature(m_weather_data_point.temperature.value());
+   m_wind_interpolator->UpdateWindDataPoint(m_weather_data_point);
+   LoadConditionsAt(Units::ZERO_ANGLE, Units::ZERO_ANGLE, altitude_msl);
+}
+
+Units::KelvinTemperature WeatherTruthFromStaticData::Initialize(const std::string &env_csv_file,
+                                                                const Units::Length &altitude,
+                                                                DataIndexParameter primary_index) {
+   m_data_index = primary_index;
+   LoadEnvFile(env_csv_file);
+   Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), altitude);
+
+   const ATMOSPHERE_IMPL basic_atm;
+   Units::Temperature offset_difference = GetTemperature() - basic_atm.GetTemperature(altitude);
+   Units::Temperature offset = basic_atm.GetTemperatureOffset() + offset_difference;
+   std::shared_ptr<mitre::oss::simcore::Atmosphere> atmosphere_with_offset = std::make_shared<ATMOSPHERE_IMPL>(offset);
+   SetAtmosphere(atmosphere_with_offset);
+
+   Update(mitre::oss::simcore::SimulationTime::Of(Units::ZERO_TIME), Units::Infinity(), altitude);
+   return offset;
+}
+
+void WeatherTruthFromStaticData::LoadEnvFile(const std::string &env_csv_file) {
+   m_weather_data_points_by_time.clear();
+   m_weather_data_points_by_dtg.clear();
+   for (const auto &row : loader::ReadNumericCsv(env_csv_file, 7, 1)) {
+      if (row[6] <= 0) throw std::runtime_error(env_csv_file + ": Kelvin temperature must be positive");
+      WindInterpolator::WeatherDataPoint point;
+      point.Vwx = Units::MetersPerSecondSpeed(row[2]);
+      point.Vwy = Units::MetersPerSecondSpeed(row[3]);
+      point.dVwx_dh = Units::HertzFrequency(row[4]);
+      point.dVwy_dh = Units::HertzFrequency(row[5]);
+      point.temperature = Units::AbsKelvinTemperature(row[6]);
+      m_weather_data_points_by_time[Units::SecondsTime(row[0])] = point;
+      m_weather_data_points_by_dtg[Units::MetersLength(row[1])] = point;
+   }
+}
+
+void WeatherTruthFromStaticData::LoadConditionsAt(const Units::Angle latitude, const Units::Angle longitude,
+                                                  const Units::Length altitude) {
+   getAtmosphere()->AirDensity(altitude, m_density, m_pressure);
+
+   // Load matrices from m_weather_data_point
+   const double ONE_THOUSAND_FEET(Units::MetersLength(Units::FeetLength(1000)).value());
+
+   // set the WindStack bounds based on altitude
+   int middle_thousand = round(altitude / Units::FeetLength(1000));
+   middle_thousand = std::max(middle_thousand, 2);
+
+   east_west().SetBounds(middle_thousand - 1, middle_thousand + 3);
+   north_south().SetBounds(middle_thousand - 1, middle_thousand + 3);
+
+   for (int i = east_west().GetMinRow(); i <= east_west().GetMaxRow(); i++) {
+      double alt_meters = (i - 1) * ONE_THOUSAND_FEET;
+      // Using the same wind vector for every altitude
+      east_west().Insert(i, Units::MetersLength(alt_meters), m_weather_data_point.Vwx);
+      north_south().Insert(i, Units::MetersLength(alt_meters), m_weather_data_point.Vwy);
+   }
+}
+
+}  // namespace mitre::oss::taft

@@ -13,8 +13,8 @@ Public builds must not depend on sibling checkouts, MITRE-internal services, or 
 
 ## Code organization
 
-- `AircraftDynamicsTestFramework/taft.cpp`: CLI entry point and scenario-file loading.
-- `AircraftDynamicsTestFramework/`: scenario execution, loaders, readers, and writers.
+- `ToacTestFramework/taft.cpp`: CLI entry point and scenario-file loading.
+- `ToacTestFramework/`: scenario execution, YAML parsing, builders, readers, and writers.
 - `include/framework/`: framework headers and aircraft builders.
 - `unittest/src/` and `unittest/resources/`: GoogleTest code and public fixtures.
 - `Run_Files/`: inherited scenario templates and CSV examples.
@@ -56,7 +56,6 @@ Useful CMake options:
 | `TAFT_BUILD_EXECUTABLE` | Build the `TAFT` CLI; defaults on. |
 | `TAFT_BUILD_TESTING` | Build unit tests; defaults on for top-level builds. |
 | `TAFT_BADA_TARGET` | Existing BADA provider target supplied by a parent project. |
-| `TAFT_FIM_SAMPLE_ALGORITHM_TARGET` | Existing sample-algorithm target supplied by a parent project. |
 | `mitre::oss::taft::framework` | Framework library alias. |
 | `mitre::oss::taft` | Executable alias. |
 
@@ -71,12 +70,28 @@ feasible. For documentation-only edits, validate the Markdown, links, Pages
 configuration, and docs workflow; a simulation rebuild is not normally needed.
 Report the checks actually run and any environment limitations.
 
+### Test ownership
+
+Keep tests with the component whose behavior their assertions verify:
+
+- `configuration_tests.cpp`: YAML records, defaults, paths, validation, and batch naming; no model construction.
+- `guidance_input_tests.cpp`: HFP/VFP/waypoint parsing and guidance construction from inputs.
+- `static_guidance_tests.cpp`: guidance calculations, speed selection, endpoints, and shipped-route integration.
+- `weather_truth_tests.cpp`: weather loading, sample selection, reloads, and zero wind.
+- `adsb_replay_tests.cpp`: traffic loading, report selection, timing, and history.
+- `speed_commands_tests.cpp`: in-memory replay and CSV/application loading in separate suites.
+- `aircraft_state_writer_tests.cpp`: output columns, aircraft identifiers, and write failures.
+
+Keep schema, file-loading, and runtime checks when they protect distinct entry
+points. Share only temporary-file setup in `test_support.h`; keep domain helpers
+local. Do not add duplicate cases to increase test counts.
+
 ## Current interfaces and simulation constraints
 
-The initialization baseline pins `aircraft_simulation_core` **1.0.0** and
-`fsloader` **1.1.0**. Inputs currently use fsloader text, not YAML. Dependency/API
-migration and YAML conversion are separate work; do not fold them into unrelated
-cleanup. Do not silently change dependency versions.
+TAFT pins `aircraft_simulation_core` **2.1.2** and `yaml-cpp` **0.9.0**.
+Simcore types use `mitre::oss::simcore`; keep provider-owned namespaces unchanged.
+YAML parsing produces plain configuration records before constructing aircraft.
+Keep yaml-cpp types private to the parser. 
 
 The public `NullAircraftPerformance` implementation throws when used for
 performance calculations. Public unit tests and `--version` work without BADA;
@@ -84,12 +99,25 @@ a full simulation needs a real provider and its data. Do not add licensed BADA
 data, internal providers, private endpoints, or machine-specific paths to the
 public repository.
 
-The CLI accepts one argument: `--version` or a configuration-file path. That
-file begins with a scenario count followed by scenario paths. Paths inside it
-resolve against the working directory. Use `./` or an absolute configuration
-path to avoid the legacy bare-filename lookup. `Run_Files` contains templates,
-including a BADA path and `{actype}` placeholder, rather than an independent
-provider-free demonstration.
+The CLI accepts one argument: `--version` or a run-manifest path. The manifest
+has a nonempty `scenarios` list of scenario YAML paths. Each scenario has a
+nonempty `aircraft` list. Input paths resolve relative to the YAML containing
+them; the command-line path and CSV output resolve from the working directory.
+There is no special bare-filename lookup or legacy text parser. Output names
+use the scenario filename stem for both `.yaml` and `.yml`.
+
+Follow established AAESim application conventions when making shared design
+decisions; check the related implementation before assuming its behavior.
+Scenario output is one `<scenario>_AcStates.csv`. Multi-aircraft runs prepend
+an `acid` column with IDs starting at 1 in YAML order; single-aircraft runs
+retain their existing ten columns.
+
+Keep CSV trajectory, truth-weather, ADS-B replay, and speed-command data formats.
+Speed playback and nonnegative pilot delay are generic capabilities. When
+replay has a valid sample it selects IAS; otherwise planned guidance applies.
+`Run_Files` includes a BADA path and aircraft-code placeholder, rather than an
+independent provider-free simulation. Test parsing and builders separately so
+public configuration tests do not require licensed data.
 
 ## CI, releases, and documentation
 
@@ -107,8 +135,8 @@ provider-free demonstration.
   `docs/README.md`, which GitHub Pages publishes automatically from `main:/docs`.
 - Configure the site in `docs/_config.yml`. Keep its `/taft` base path and use
   absolute GitHub URLs for repository files outside the published docs folder.
-- The old `FixedMassAircraftPerformance.h` URL is intentionally deferred until
-  the API refactor. Do not rewrite it as part of a routine link cleanup.
+- Keep the `FixedMassAircraftPerformance.h` documentation link aligned with the
+  pinned simcore version. Optional providers must use compatible simcore types.
 
 Use PRs to advance `main`. Do not merge, tag, publish a release, or change
 repository protection settings unless the current task authorizes it.

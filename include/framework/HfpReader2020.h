@@ -35,7 +35,7 @@
 
 namespace mitre::oss::taft {
 
-class HfpReader2020 final : public aaesim::open_source::DataReader {
+class HfpReader2020 final : public mitre::oss::simcore::DataReader {
   public:
    HfpReader2020(std::string file_name, int header_lines);
 
@@ -43,13 +43,15 @@ class HfpReader2020 final : public aaesim::open_source::DataReader {
 
    virtual ~HfpReader2020();
 
+   double GetDouble(int column) const;
+
    Units::Length GetX();
 
    Units::Length GetY();
 
    Units::Length GetDTG();
 
-   aaesim::open_source::HorizontalPath::SegmentType GetSegmentType();
+   mitre::oss::simcore::HorizontalPath::SegmentType GetSegmentType();
 
    Units::UnsignedAngle GetCourse();
 
@@ -76,8 +78,10 @@ class HfpReader2020 final : public aaesim::open_source::DataReader {
    Units::Angle GetTurnCenterLongitude();
 
   private:
+   int GetColumnNumber(const std::string &name);
    void SetColumnIndexesFromHeader(const int header_lines);
 
+   std::string m_source{"HFP stream"};
    int m_x_column;
    int m_y_column;
    int m_dtg_column;

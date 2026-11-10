@@ -33,7 +33,7 @@
 
 namespace mitre::oss::taft {
 
-class RefReader : public aaesim::open_source::DataReader {
+class RefReader : public mitre::oss::simcore::DataReader {
   public:
    RefReader(const std::string &file_name, int header_lines, size_t expected_columns);
    RefReader(std::shared_ptr<std::istream> input_stream, int header_lines, size_t expected_columns);

@@ -1,3 +1,4 @@
 *.csv
+!example-*.csv
 *~
 input_echo.html

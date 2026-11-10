@@ -18,49 +18,25 @@
 
 #pragma once
 
-#include <loader/LoggingLoadable.h>
-#include <scalar/Angle.h>
-#include <scalar/Time.h>
+#include <log4cplus/logger.h>
 
 #include <memory>
-#include <string>
 #include <vector>
 
-#include "framework/FrameworkAircraftLoader.h"
+#include "framework/Configuration.h"
 #include "framework/TestFrameworkAircraft.h"
 #include "public/Scenario.h"
 #include "public/SimulationTime.h"
 
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-#include "imalgs/FIMAlgorithmDataWriter.h"
-#include "imalgs/PredictionFileKinematic.h"
-#endif
-
 namespace mitre::oss::taft {
-
-class TestFrameworkScenario final : public aaesim::open_source::Scenario, public LoggingLoadable {
+class TestFrameworkScenario final : public mitre::oss::simcore::Scenario {
   public:
-   TestFrameworkScenario();
-
-   ~TestFrameworkScenario() = default;
-
+   explicit TestFrameworkScenario(const ScenarioConfiguration &configuration);
    void SimulateAllIterations() override;
 
-   bool load(DecodedStream *input) override;
-
   private:
-   static const Units::SecondsTime SIMULATION_TIME_STEP;
    static log4cplus::Logger m_logger;
-
-   bool AdvanceAllAircraft(aaesim::open_source::SimulationTime &time);
-   void PostLoad(const std::string &bada_data_path, std::vector<FrameworkAircraftLoader> &aircraft_loaders);
-
+   bool AdvanceAllAircraft(mitre::oss::simcore::SimulationTime &time);
    std::vector<std::shared_ptr<TestFrameworkAircraft>> m_aircraft_in_scenario;
-
-#ifdef SAMPLE_ALGORITHM_LIBRARY
-   std::unique_ptr<interval_management::open_source::FIMAlgorithmDataWriter> m_sample_algorithm_writer;
-   std::unique_ptr<interval_management::open_source::PredictionFileKinematic> m_sample_algorithm_kinematic_writer;
-#endif
 };
-
-}  // namespace mitre::oss::taft
+}

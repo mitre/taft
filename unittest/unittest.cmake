@@ -4,7 +4,7 @@
 # the /unittest library as possible.
 add_subdirectory(${UNITTEST_DIR})
 
-include(${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/framework.cmake)
+include(${UNITTEST_DIR}/src/ToacTestFramework/framework.cmake)
 
 # add a target for running all of the unit test binaries at one time
 add_custom_target(run_tests

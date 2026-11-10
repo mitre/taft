@@ -18,14 +18,13 @@
 
 #pragma once
 
-#include <loader/Loadable.h>
-
 #include <list>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "framework/Configuration.h"
 #include "HfpReader2020.h"
 #include "MiniCSV/minicsv.h"
 #include "framework/GuidanceFromStaticData.h"
@@ -33,19 +32,11 @@
 #include "public/Waypoint.h"
 
 namespace mitre::oss::taft {
-class GuidanceDataLoader final : public Loadable {
+class GuidanceDataLoader final {
   public:
-   GuidanceDataLoader()
-      : m_loaded(false),
-        m_hfp_filename(),
-        m_vfp_filename(),
-        m_tangent_plane(),
-        m_compute_xy(true),
-        m_planned_descent_parameters() {}
-   bool load(DecodedStream *input) override;
+   explicit GuidanceDataLoader(const GuidanceConfiguration &configuration);
    std::shared_ptr<GuidanceFromStaticData> BuildGuidanceCalculator();
-   std::shared_ptr<TangentPlaneSequence> GetTangentPlaneSequence() const;
-   const bool IsLoaded() const;
+   std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> GetTangentPlaneSequence() const;
    GuidanceFromStaticData::PlannedDescentParameters GetPlannedDescentParameters() const;
 
   private:
@@ -80,30 +71,30 @@ class GuidanceDataLoader final : public Loadable {
       NUM_HORIZONTAL_TRAJ_FIELDS
    };
 
-   static void DoDebugLogging(const std::vector<aaesim::open_source::HorizontalPath> &horizontal_path);
+   static void DoDebugLogging(const std::vector<mitre::oss::simcore::HorizontalPath> &horizontal_path);
    GuidanceFromStaticData::VerticalData BuildVerticalGuidanceData() const;
-   std::pair<std::shared_ptr<TangentPlaneSequence>, std::vector<aaesim::open_source::HorizontalPath>> ProcessHfpData()
-         const;
-   std::pair<std::shared_ptr<TangentPlaneSequence>, std::vector<aaesim::open_source::HorizontalPath>>
+   std::pair<std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence>,
+             std::vector<mitre::oss::simcore::HorizontalPath>>
+         ProcessHfpData() const;
+   std::pair<std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence>,
+             std::vector<mitre::oss::simcore::HorizontalPath>>
          ProcessWaypointSequenceData() const;
-   std::vector<aaesim::open_source::HorizontalPath> BuildHorizontalPathUsingAllColumns(
-         HfpReader2020 &hfp_reader) const;
-   std::vector<aaesim::open_source::HorizontalPath> BuildHorizontalPathComputeEuclideanComponents(
-         HfpReader2020 &hfp_reader, std::shared_ptr<TangentPlaneSequence> &tangent_plane_sequence) const;
-   std::shared_ptr<TangentPlaneSequence> BuildTangentPlaneFromFileData() const;
-   std::shared_ptr<TangentPlaneSequence> BuildTangentPlane(const std::list<Waypoint> &ordered_waypoints) const;
-   void ComputeCourseColumnsInPlace(std::vector<aaesim::open_source::HorizontalPath> &horizontal_path) const;
+   std::vector<mitre::oss::simcore::HorizontalPath> BuildHorizontalPathUsingAllColumns(HfpReader2020 &hfp_reader) const;
+   std::vector<mitre::oss::simcore::HorizontalPath> BuildHorizontalPathComputeEuclideanComponents(
+         HfpReader2020 &hfp_reader,
+         std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> &tangent_plane_sequence) const;
+   std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> BuildTangentPlaneFromFileData() const;
+   std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> BuildTangentPlane(
+         const std::list<mitre::oss::simcore::Waypoint> &ordered_waypoints) const;
+   void ComputeCourseColumnsInPlace(std::vector<mitre::oss::simcore::HorizontalPath> &horizontal_path) const;
 
-   bool m_loaded;
    std::string m_hfp_filename, m_vfp_filename, m_waypoint_sequence_file;
-   std::shared_ptr<TangentPlaneSequence> m_tangent_plane;
+   std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> m_tangent_plane;
    bool m_compute_xy;
    GuidanceFromStaticData::PlannedDescentParameters m_planned_descent_parameters;
 };
 
-inline const bool GuidanceDataLoader::IsLoaded() const { return m_loaded; }
-
-inline std::shared_ptr<TangentPlaneSequence> GuidanceDataLoader::GetTangentPlaneSequence() const {
+inline std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> GuidanceDataLoader::GetTangentPlaneSequence() const {
    return m_tangent_plane;
 }
 
@@ -112,7 +103,7 @@ inline GuidanceFromStaticData::PlannedDescentParameters GuidanceDataLoader::GetP
 }
 
 inline void GuidanceDataLoader::DoDebugLogging(
-      const std::vector<aaesim::open_source::HorizontalPath> &horizontal_path_sequence) {
+      const std::vector<mitre::oss::simcore::HorizontalPath> &horizontal_path_sequence) {
    if (m_logger.getLogLevel() == log4cplus::TRACE_LOG_LEVEL) {
       mini::csv::ofstream os("debug_hfp_data.csv");
       if (!os.is_open()) {
@@ -142,7 +133,7 @@ inline void GuidanceDataLoader::DoDebugLogging(
       os << NEWLINE;
 
       int index = 0;
-      auto hfp_writer = [&index, &os](const aaesim::open_source::HorizontalPath &path_segment) {
+      auto hfp_writer = [&index, &os](const mitre::oss::simcore::HorizontalPath &path_segment) {
          os << index;
          os << path_segment.GetXPositionMeters();
          os << path_segment.GetYPositionMeters();

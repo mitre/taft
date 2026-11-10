@@ -37,7 +37,7 @@
 
 namespace mitre::oss::taft {
 
-class HfpReaderPre2020 final : public aaesim::open_source::DataReader {
+class HfpReaderPre2020 final : public mitre::oss::simcore::DataReader {
   public:
    static const size_t EXPECTED_TV_COLUMN_COUNT;
    HfpReaderPre2020(const std::string &file_name, int header_lines);

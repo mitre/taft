@@ -6,7 +6,7 @@ install(DIRECTORY docs Run_Files DESTINATION . COMPONENT TAFTRuntime
         PATTERN ".gitignore" EXCLUDE PATTERN "_config.yml" EXCLUDE)
 
 # Include notices shipped by dependencies linked into executable
-foreach(dependency IN ITEMS aircraft_simulation_core fsloader cppuom log4cplus
+foreach(dependency IN ITEMS aircraft_simulation_core yaml_cpp cppuom log4cplus
                             geolib_idealab minicsv nlohmann_json)
     set(dependency_source "${CPM_PACKAGE_${dependency}_SOURCE_DIR}")
     if(dependency_source)

@@ -27,29 +27,30 @@
 #include "public/TangentPlaneSequence.h"
 
 namespace mitre::oss::taft {
-class PreloadedAdsbReceiver final : public aaesim::open_source::ADSBReceiver {
+class PreloadedAdsbReceiver final : public mitre::oss::simcore::ADSBReceiver {
   public:
    PreloadedAdsbReceiver() = default;
-   PreloadedAdsbReceiver(const std::string &ttv_csv_file, std::shared_ptr<TangentPlaneSequence> tangent_plane_sequence);
+   PreloadedAdsbReceiver(const std::string &traffic_csv_file,
+                         std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> tangent_plane_sequence);
 
-   aaesim::open_source::ADSBSVReport GetCurrentADSBReport(int id) const override;
-   aaesim::open_source::ADSBSVReport GetADSBReportBefore(int id, Units::Time time) const override;
-   const std::vector<aaesim::open_source::ADSBSVReport> &GetReportsReceivedByTime(
-         const aaesim::open_source::SimulationTime &time) const override;
-   const std::map<int, std::vector<aaesim::open_source::ADSBSVReport> > &GetAllReportsReceived() const override;
-   std::map<int, aaesim::open_source::ADSBSVReport> const GetCurrentADSBReport() const override;
+   mitre::oss::simcore::ADSBSVReport GetCurrentADSBReport(int id) const override;
+   mitre::oss::simcore::ADSBSVReport GetADSBReportBefore(int id, Units::Time time) const override;
+   const std::vector<mitre::oss::simcore::ADSBSVReport> &GetReportsReceivedByTime(
+         const mitre::oss::simcore::SimulationTime &time) const override;
+   const std::map<int, std::vector<mitre::oss::simcore::ADSBSVReport> > &GetAllReportsReceived() const override;
+   std::map<int, mitre::oss::simcore::ADSBSVReport> const GetCurrentADSBReport() const override;
    void Initialize(Units::Length adsb_reception_range_threshold) override;
-   std::map<int, aaesim::open_source::ADSBSVReport> Receive(const aaesim::open_source::SimulationTime &time,
-                                                            const aaesim::open_source::AircraftState &state) override;
+   std::map<int, mitre::oss::simcore::ADSBSVReport> Receive(const mitre::oss::simcore::SimulationTime &time,
+                                                            const mitre::oss::simcore::AircraftState &state) override;
 
   private:
-   std::string m_ttv_filename;
-   std::shared_ptr<TangentPlaneSequence> m_tanget_plane_sequence;
-   std::map<int, aaesim::open_source::ADSBSVReport> m_most_recent_adsb_reports;            // ADSB data stored as
+   std::string m_traffic_filename;
+   std::shared_ptr<mitre::oss::simcore::TangentPlaneSequence> m_tanget_plane_sequence;
+   std::map<int, mitre::oss::simcore::ADSBSVReport> m_most_recent_adsb_reports;            // ADSB data stored as
                                                                                            // [numericFlightID][Report]
-   std::map<int, std::vector<aaesim::open_source::ADSBSVReport> > m_all_reports_received;  // ADSB data stored as
+   std::map<int, std::vector<mitre::oss::simcore::ADSBSVReport> > m_all_reports_received;  // ADSB data stored as
                                                                                            // [numericFlightID][Report]
-   std::map<int, std::vector<aaesim::open_source::ADSBSVReport> > m_reports_received_by_time;  // ADSB reports received
+   std::map<int, std::vector<mitre::oss::simcore::ADSBSVReport> > m_reports_received_by_time;  // ADSB reports received
                                                                                                // stored as
                                                                                                // [time][report_vector]
 };

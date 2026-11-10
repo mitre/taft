@@ -21,7 +21,7 @@
 #include "public/Wind.h"
 
 namespace mitre::oss::taft {
-class WindInterpolator final : public Wind {
+class WindInterpolator final : public mitre::oss::simcore::Wind {
   public:
    struct WeatherDataPoint {
       Units::Speed Vwx, Vwy;
@@ -42,8 +42,8 @@ class WindInterpolator final : public Wind {
                         Units::Speed &v) override;
 
    void InterpolateWindMatrix(Units::Angle lat_in, Units::Angle lon_in, Units::Length alt_in,
-                              aaesim::open_source::WindStack &east_west,
-                              aaesim::open_source::WindStack &north_south) override;
+                              mitre::oss::simcore::WindStack &east_west,
+                              mitre::oss::simcore::WindStack &north_south) override;
 
   private:
    WeatherDataPoint m_weather_data_point;

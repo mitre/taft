@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <loader/LoggingLoadable.h>
-
 #include <memory>
 #include <string>
 #include <tuple>
@@ -31,50 +29,43 @@
 #include "public/WeatherTruth.h"
 
 namespace mitre::oss::taft {
-class FrameworkAircraftLoader final : public LoggingLoadable {
+class FrameworkAircraftLoader final {
   public:
-   FrameworkAircraftLoader();
-   bool load(DecodedStream *input) override;
+   explicit FrameworkAircraftLoader(const AircraftConfiguration &configuration, int aircraft_id = 1);
    std::shared_ptr<TestFrameworkAircraft> BuildAircraft();
 
   private:
-   static double m_mass_fraction_default, m_start_time_default;
+   int m_aircraft_id;
    int m_start_time{0};
    double m_mass_fraction{0};
    std::string m_ac_type{};
    std::string m_speed_management_type{};
-   std::string m_ttv_csv_file{};
-   std::string m_forewind_csv_file{};
+   std::string m_traffic_csv_file{};
    std::string m_env_csv_file{};
    std::string m_env_csv_data_index{};
-   GuidanceDataLoader m_guidance_loader{};
-   ApplicationLoader m_flightdeck_application_loader{};
-   EarthModel::LocalPositionEnu m_initial_local_position{};
+   GuidanceDataLoader m_guidance_loader;
+   ApplicationLoader m_flightdeck_application_loader;
+   mitre::oss::simcore::EarthModel::LocalPositionEnu m_initial_local_position{};
 
-   std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> BuildAircraftPerformance(
+   std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> BuildAircraftPerformance(
          const std::string &bada_aircraft_code);
-   std::shared_ptr<aaesim::open_source::ThreeDOFDynamics> BuildAircraftDynamics(
-         std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &performance,
-         std::shared_ptr<WeatherTruthFromStaticData> &true_weather,
-         std::shared_ptr<GuidanceFromStaticData> &guidance,
-         const EarthModel::GeodeticPosition &initial_wgs84_position);
-   std::shared_ptr<aaesim::open_source::AircraftControl> BuildAircraftControl(
+   std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> BuildAircraftDynamics(
+         std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> &performance,
+         std::shared_ptr<WeatherTruthFromStaticData> &true_weather, std::shared_ptr<GuidanceFromStaticData> &guidance,
+         const mitre::oss::simcore::EarthModel::GeodeticPosition &initial_wgs84_position);
+   std::shared_ptr<mitre::oss::simcore::AircraftControl> BuildAircraftControl(
          std::string control_method,
-         std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &bada_calculator);
+         std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> &bada_calculator);
    std::shared_ptr<WeatherTruthFromStaticData> BuildTrueWeather(const std::string &env_csv_file,
                                                                        const std::string &env_csv_data_index,
                                                                        Units::Length initial_altitude);
-   std::shared_ptr<aaesim::open_source::ADSBReceiver> BuildAdsbReceiver(std::string ttv_csv_file);
-   aaesim::open_source::AircraftState BuildInitialState(
-         std::shared_ptr<aaesim::open_source::ThreeDOFDynamics> &dynamics, Units::Time start_time,
-         Units::Length initial_altitude, const EarthModel::GeodeticPosition &wgs84_position);
-   EarthModel::LocalPositionEnu ComputeInitialPositionOnPath(std::shared_ptr<GuidanceFromStaticData> &guidance);
-   std::tuple<bool, EarthModel::LocalPositionEnu> IsDistanceAlongPathValid(
-         std::shared_ptr<GuidanceFromStaticData> &guidance,
-         const Units::Length &target_distance_along_path) const;
-   std::shared_ptr<aaesim::open_source::FlightDeckApplication> BuildFlightdeckApplication(
-         std::shared_ptr<aaesim::open_source::FixedMassAircraftPerformance> &performance,
-         std::shared_ptr<aaesim::open_source::ADSBReceiver> &receiver, const aaesim::open_source::AircraftState &state,
-         const GuidanceFromStaticData::PlannedDescentParameters &guidance_descent_parameters);
+   std::shared_ptr<mitre::oss::simcore::ADSBReceiver> BuildAdsbReceiver(std::string traffic_csv_file);
+   mitre::oss::simcore::AircraftState BuildInitialState(
+         std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> &dynamics, Units::Time start_time,
+         Units::Length initial_altitude, const mitre::oss::simcore::EarthModel::GeodeticPosition &wgs84_position);
+   mitre::oss::simcore::EarthModel::LocalPositionEnu ComputeInitialPositionOnPath(
+         std::shared_ptr<GuidanceFromStaticData> &guidance);
+   std::tuple<bool, mitre::oss::simcore::EarthModel::LocalPositionEnu> IsDistanceAlongPathValid(
+         std::shared_ptr<GuidanceFromStaticData> &guidance, const Units::Length &target_distance_along_path) const;
 };
 }  // namespace mitre::oss::taft

@@ -25,11 +25,12 @@
 #include "public/OutputHandler.h"
 
 namespace mitre::oss::taft {
-class AircraftStateWriter final : public OutputHandler {
+class AircraftStateWriter final : public mitre::oss::simcore::OutputHandler {
   public:
-   AircraftStateWriter() : OutputHandler("", "_AcStates.csv"), m_data_to_write() {}
+   explicit AircraftStateWriter(bool include_aircraft_id = false)
+      : mitre::oss::simcore::OutputHandler("", "_AcStates.csv"), m_include_aircraft_id(include_aircraft_id) {}
    void Finish() override;
-   void Gather(std::vector<aaesim::open_source::AircraftState> aircraft_states);
+   void Gather(std::vector<mitre::oss::simcore::AircraftState> aircraft_states);
 
   private:
    static std::vector<std::string> COLUMN_NAMES;
@@ -37,6 +38,7 @@ class AircraftStateWriter final : public OutputHandler {
       DataToWrite() = default;
       ~DataToWrite() = default;
 
+      int aircraft_id{0};
       Units::Time simulation_time{Units::NegInfinity()};
       Units::Speed dynamics_ias{Units::NegInfinity()};
       Units::Speed dynamics_tas{Units::NegInfinity()};
@@ -48,6 +50,7 @@ class AircraftStateWriter final : public OutputHandler {
       Units::DegreesAngle latitude{0}, longitude{0};
    };
 
+   bool m_include_aircraft_id;
    std::vector<DataToWrite> m_data_to_write;
 };
 }  // namespace mitre::oss::taft

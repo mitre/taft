@@ -1,0 +1,167 @@
+// ****************************************************************************
+// NOTICE
+//
+// This is the copyright work of The MITRE Corporation, and was produced for the U. S. Government under
+// Contract Number 693KA8-22-C-00001, and is subject to Federal Aviation Administration Acquisition
+// Management System Clause 3.5-13, Rights In Data-General (Oct. 2014), Alt. III and Alt. IV (Jan.
+// 2009).
+
+// No other use other than that granted to the U. S. Government, or to those acting on behalf of
+// the U. S. Government, under that Clause is authorized without the express written permission of The
+// MITRE Corporation.
+
+// For further information, please contact The MITRE Corporation, Contracts
+// Management Office, 7515 Colshire Drive, McLean, VA 22102-7539, (703) 983-6000.
+//
+// (c) 2026 The MITRE Corporation. All Rights Reserved.
+// ****************************************************************************
+
+#include "framework/HfpReader2020.h"
+#include "framework/NumericCsv.h"
+
+#include <public/HorizontalPath.h>
+
+#include <algorithm>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+namespace mitre::oss::taft {
+
+using namespace mitre::oss::simcore;
+
+HfpReader2020::HfpReader2020(std::string file_name, int header_lines)
+   : DataReader(file_name, 0, 0),
+     m_source(file_name),
+     m_x_column(),
+     m_y_column(),
+     m_dtg_column(),
+     m_segment_type_column(),
+     m_course_column(),
+     m_turn_center_x_column(),
+     m_turn_center_y_column(),
+     m_angle_start_of_turn_column(),
+     m_angle_end_of_turn_column(),
+     m_turn_radius_column(),
+     m_ground_speed_column(),
+     m_bank_angle_column(),
+     m_latitude_column(),
+     m_longitude_column(),
+     m_turn_center_latitude_column(),
+     m_turn_center_longitude_column() {
+   SetColumnIndexesFromHeader(header_lines);
+}
+
+HfpReader2020::HfpReader2020(std::shared_ptr<std::istream> input_stream, int header_lines)
+   : DataReader(std::move(input_stream), 0, 0) {
+   SetColumnIndexesFromHeader(header_lines);
+}
+
+HfpReader2020::~HfpReader2020() = default;
+
+double HfpReader2020::GetDouble(int column) const {
+   return loader::ReadFiniteNumber(GetString(column), m_source + ": column " + std::to_string(column + 1));
+}
+
+int HfpReader2020::GetColumnNumber(const std::string &name) {
+   for (std::size_t column = 0; column < GetColumnCount(); ++column) {
+      auto actual = GetString(column);
+      if (!actual.empty() && actual.back() == '\r') actual.pop_back();
+      if (actual == name) return static_cast<int>(column);
+   }
+   throw std::runtime_error(m_source + ": missing required column: " + name);
+}
+
+void HfpReader2020::SetColumnIndexesFromHeader(const int header_lines) {
+   if (header_lines < 1) {
+      throw std::logic_error("Headers are required for HfpReader2020.");
+   }
+
+   int line_number = 0;
+   if (!Advance()) throw std::runtime_error(m_source + ": missing HFP header");
+
+   // Meaningful HPF headers are at least 4 characters; first column is normally 5.
+   while ((GetColumnCount() == 0 || GetString(0).length() < 3) && line_number < header_lines) {
+      line_number++;
+      if (!Advance()) throw std::runtime_error(m_source + ": missing HFP header");
+   }
+
+   if (line_number == header_lines) {
+      throw std::runtime_error("Suitable header line not found.");
+   }
+
+   BuildColumnIndex();
+
+   // Record column indexes.
+   m_x_column = GetColumnNumber("x[m]");
+   m_y_column = GetColumnNumber("y[m]");
+   m_dtg_column = GetColumnNumber("DTG[m]");
+   m_segment_type_column = GetColumnNumber("Segment_Type");
+   m_course_column = GetColumnNumber("Course[rad]");
+   m_turn_center_x_column = GetColumnNumber("Turn_Center_x[m]");
+   m_turn_center_y_column = GetColumnNumber("Turn_Center_y[m]");
+   m_angle_start_of_turn_column = GetColumnNumber("Angle_Start_of_Turn[rad]");
+   m_angle_end_of_turn_column = GetColumnNumber("Angle_End_of_Turn[rad]");
+   m_turn_radius_column = GetColumnNumber("R[m]");
+   m_ground_speed_column = GetColumnNumber("GS[m/s]");
+   m_bank_angle_column = GetColumnNumber("Bank_Angle[deg]");
+   m_latitude_column = GetColumnNumber("Lat[deg]");
+   m_longitude_column = GetColumnNumber("Lon[deg]");
+   m_turn_center_latitude_column = GetColumnNumber("Turn_Center_Lat[deg]");
+   m_turn_center_longitude_column = GetColumnNumber("Turn_Center_Lon[deg]");
+
+   SetExpectedColumnCount(GetColumnCount());
+}
+
+Units::Length HfpReader2020::GetX() { return Units::MetersLength(GetDouble(m_x_column)); }
+
+Units::Length HfpReader2020::GetY() { return Units::MetersLength(GetDouble(m_y_column)); }
+
+Units::Length HfpReader2020::GetDTG() { return Units::MetersLength(GetDouble(m_dtg_column)); }
+
+HorizontalPath::SegmentType HfpReader2020::GetSegmentType() {
+   std::string segment_type = GetString(m_segment_type_column);
+   std::transform(segment_type.cbegin(), segment_type.cend(), segment_type.begin(),
+                  [](unsigned char c) { return std::tolower(c); });
+   if (segment_type == "straight") {
+      return HorizontalPath::STRAIGHT;
+   } else if (segment_type == "turn") {
+      return HorizontalPath::TURN;
+   } else {
+      return HorizontalPath::UNSET;
+   }
+}
+
+Units::UnsignedAngle HfpReader2020::GetCourse() { return Units::RadiansAngle(GetDouble(m_course_column)); }
+
+Units::Length HfpReader2020::GetTurnCenterX() { return Units::MetersLength(GetDouble(m_turn_center_x_column)); }
+
+Units::Length HfpReader2020::GetTurnCenterY() { return Units::MetersLength(GetDouble(m_turn_center_y_column)); }
+
+Units::UnsignedAngle HfpReader2020::GetAngleStartOfTurn() {
+   return Units::RadiansAngle(GetDouble(m_angle_start_of_turn_column));
+}
+
+Units::UnsignedAngle HfpReader2020::GetAngleEndOfTurn() {
+   return Units::RadiansAngle(GetDouble(m_angle_end_of_turn_column));
+}
+
+Units::Length HfpReader2020::GetTurnRadius() { return Units::MetersLength(GetDouble(m_turn_radius_column)); }
+
+Units::Speed HfpReader2020::GetGroundSpeed() { return Units::MetersPerSecondSpeed(GetDouble(m_ground_speed_column)); }
+
+Units::Angle HfpReader2020::GetBankAngle() { return Units::DegreesAngle(GetDouble(m_bank_angle_column)); }
+
+Units::Angle HfpReader2020::GetLatitude() { return Units::DegreesAngle(GetDouble(m_latitude_column)); }
+
+Units::Angle HfpReader2020::GetLongitude() { return Units::DegreesAngle(GetDouble(m_longitude_column)); }
+
+Units::Angle HfpReader2020::GetTurnCenterLatitude() {
+   return Units::DegreesAngle(GetDouble(m_turn_center_latitude_column));
+}
+
+Units::Angle HfpReader2020::GetTurnCenterLongitude() {
+   return Units::DegreesAngle(GetDouble(m_turn_center_longitude_column));
+}
+
+}  // namespace mitre::oss::taft

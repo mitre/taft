@@ -24,11 +24,10 @@
 #include <string>
 #include <vector>
 
-#include "public/DataReader.h"
 #include "utility/CustomUnits.h"
 
 namespace mitre::oss::taft {
-class WaypointSequenceReader final : aaesim::open_source::DataReader {
+class WaypointSequenceReader final {
   public:
    struct WaypointSequenceRow {
       WaypointSequenceRow()
@@ -41,7 +40,10 @@ class WaypointSequenceReader final : aaesim::open_source::DataReader {
       Units::Angle bank_angle;
       Units::Length turn_radius;
    };
-   WaypointSequenceReader(const std::string &file_name) : DataReader(file_name, 1, 4) {};
+   explicit WaypointSequenceReader(const std::string &file_name) : m_filename(file_name) {}
    std::vector<WaypointSequenceRow> ReadFile();
+
+  private:
+   std::string m_filename;
 };
 }  // namespace mitre::oss::taft
