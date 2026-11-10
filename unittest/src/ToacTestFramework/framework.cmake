@@ -4,13 +4,13 @@ cmake_minimum_required(VERSION 3.14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 set(TAFT_TEST_SOURCE
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/configuration_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/guidance_input_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/static_guidance_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/weather_truth_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/adsb_replay_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/speed_commands_tests.cpp
-   ${UNITTEST_DIR}/src/AircraftDynamicsTestFramework/aircraft_state_writer_tests.cpp
+   ${UNITTEST_DIR}/src/ToacTestFramework/configuration_tests.cpp
+   ${UNITTEST_DIR}/src/ToacTestFramework/guidance_input_tests.cpp
+   ${UNITTEST_DIR}/src/ToacTestFramework/static_guidance_tests.cpp
+   ${UNITTEST_DIR}/src/ToacTestFramework/weather_truth_tests.cpp
+   ${UNITTEST_DIR}/src/ToacTestFramework/adsb_replay_tests.cpp
+   ${UNITTEST_DIR}/src/ToacTestFramework/speed_commands_tests.cpp
+   ${UNITTEST_DIR}/src/ToacTestFramework/aircraft_state_writer_tests.cpp
 )
 
 set(TAFT_TEST_OUTPUT_DIR ${PROJECT_BINARY_DIR}/unittest/bin)

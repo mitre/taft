@@ -13,8 +13,8 @@ Public builds must not depend on sibling checkouts, MITRE-internal services, or 
 
 ## Code organization
 
-- `AircraftDynamicsTestFramework/taft.cpp`: CLI entry point and scenario-file loading.
-- `AircraftDynamicsTestFramework/`: scenario execution, YAML parsing, builders, readers, and writers.
+- `ToacTestFramework/taft.cpp`: CLI entry point and scenario-file loading.
+- `ToacTestFramework/`: scenario execution, YAML parsing, builders, readers, and writers.
 - `include/framework/`: framework headers and aircraft builders.
 - `unittest/src/` and `unittest/resources/`: GoogleTest code and public fixtures.
 - `Run_Files/`: inherited scenario templates and CSV examples.

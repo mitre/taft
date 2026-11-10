@@ -99,13 +99,13 @@ The existing CMake integration hooks are:
 
 A parent CMake project must define a supplied target before adding TAFT. For a
 custom provider, connect its construction through the aircraft builder or
-[FrameworkAircraftLoader.cpp](https://github.com/mitre/taft/blob/main/AircraftDynamicsTestFramework/loaders/FrameworkAircraftLoader.cpp);
+[FrameworkAircraftLoader.cpp](https://github.com/mitre/taft/blob/main/ToacTestFramework/loaders/FrameworkAircraftLoader.cpp);
 linking a target alone does not register an arbitrary implementation with the
 command-line loader.
 
 ## Run a scenario
 
-The [entry point](https://github.com/mitre/taft/blob/main/AircraftDynamicsTestFramework/taft.cpp)
+The [entry point](https://github.com/mitre/taft/blob/main/ToacTestFramework/taft.cpp)
 accepts exactly one argument: either `--version` or a configuration-file path.
 
 A run manifest lists one or more scenario YAML files in execution order:
@@ -196,7 +196,7 @@ packages include a starting configuration.
 
 | Location | Contents |
 | --- | --- |
-| `AircraftDynamicsTestFramework/` | Scenario execution, readers, loaders, writers, and the command-line entry point. |
+| `ToacTestFramework/` | Scenario execution, readers, loaders, writers, and the command-line entry point. |
 | `include/framework/` | Framework headers and builder interfaces. |
 | `unittest/` | GoogleTest sources and public test resources. |
 | `Run_Files/` | YAML run/scenario templates and CSV inputs. |

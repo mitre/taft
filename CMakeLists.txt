@@ -82,7 +82,7 @@ if(NOT TARGET mitre::oss::simcore)
     )
 endif()
 
-set (FRAMEWORK_DIR       ${CMAKE_CURRENT_SOURCE_DIR}/AircraftDynamicsTestFramework)
+set (FRAMEWORK_DIR       ${CMAKE_CURRENT_SOURCE_DIR}/ToacTestFramework)
 set (aaesim_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include )
 set (UNITTEST_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/unittest)
 
