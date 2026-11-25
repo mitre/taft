@@ -5,9 +5,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 set(DATA_LOADER_FILES
    loaders/ConfigurationLoader.cpp
-   loaders/ApplicationLoader.cpp
-   loaders/SpeedCommandsLoader.cpp
-   loaders/GuidanceDataLoader.cpp
    loaders/FrameworkAircraftLoader.cpp
 )
 

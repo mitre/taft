@@ -18,16 +18,23 @@
 
 #pragma once
 
-#include "framework/Configuration.h"
-#include "framework/SpeedCommandsFromStaticData.h"
+#include <stdexcept>
 
-namespace mitre::oss::taft::loader {
-class SpeedCommandsLoader final {
+#include "framework/FmsTestBench.h"
+
+namespace mitre::oss::taft {
+
+class NullFmsTestBench final : public FmsTestBench {
   public:
-   explicit SpeedCommandsLoader(const SpeedCommandsConfiguration &configuration);
-   SpeedCommandsFromStaticData Build() const;
+   InitialConditions GetInitialConditions() const override { throw std::runtime_error("No FMS test bench configured."); }
 
-  private:
-   SpeedCommandsConfiguration m_configuration;
+   mitre::oss::simcore::Guidance Update(const mitre::oss::simcore::SimulationTime &,
+                                      const mitre::oss::simcore::AircraftState &) override {
+      throw std::runtime_error("No FMS test bench configured.");
+   }
+
+   Units::Length GetDistanceToGo() const override { return Units::infinity(); }
+   bool IsFinished() const override { return false; }
 };
-}
+
+}  // namespace mitre::oss::taft

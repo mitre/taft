@@ -60,7 +60,6 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/taft-tools"
           "$RUNNER_TEMP/taft-tools/bin/python" -m pip install cmake==3.31.10
-          echo "$RUNNER_TEMP/taft-tools/bin" >> "$GITHUB_PATH"
 
       - name: Cache dependency sources
         uses: actions/cache@v4
@@ -69,17 +68,19 @@ jobs:
           key: cpm-${{ matrix.environment }}-${{ runner.arch }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '.cmake/get_cpm.cmake') }}
           restore-keys: cpm-${{ matrix.environment }}-${{ runner.arch }}-
 
+      # Invoke the venv tools by path so the Rocky container keeps its default PATH.
       - name: Configure
         env:
           PACKAGE_PLATFORM: ${{ matrix.platform }}
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+          "$RUNNER_TEMP/taft-tools/bin/cmake" -S . -B build -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_SHARED_LIBS=OFF -DTAFT_BUILD_TESTING=ON \
             -DTAFT_RELEASE_TAG="$RELEASE_TAG" \
             -DTAFT_PACKAGE_PLATFORM="$PACKAGE_PLATFORM"
 
       - name: Build and run unit tests
-        run: cmake --build build --target TAFT run_tests --parallel 2
+        run: |
+          "$RUNNER_TEMP/taft-tools/bin/cmake" --build build --target TAFT run_tests --parallel 2
 
       - name: Upload test results
         if: always()
@@ -92,7 +93,7 @@ jobs:
       - name: Build and check release package
         run: |
           expected_version=$(./build/bin/TAFT --version | tail -n 1)
-          cpack --config build/CPackConfig.cmake -B dist
+          "$RUNNER_TEMP/taft-tools/bin/cpack" --config build/CPackConfig.cmake -B dist
           mkdir -p "$RUNNER_TEMP/taft-unpacked"
           tar -xzf dist/taft-*.tar.gz -C "$RUNNER_TEMP/taft-unpacked"
           package_roots=("$RUNNER_TEMP/taft-unpacked"/taft-*)

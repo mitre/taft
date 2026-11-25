@@ -26,6 +26,7 @@
 
 #include "framework/AircraftStateWriter.h"
 #include "framework/FrameworkAircraftLoader.h"
+#include "framework/NullFmsTestBench.h"
 
 #ifdef MITRE_BADA3_LIBRARY
 #include "bada/Bada3Factory.h"
@@ -35,7 +36,8 @@ namespace mitre::oss::taft {
 
 log4cplus::Logger TestFrameworkScenario::m_logger = log4cplus::Logger::getInstance("TestFrameworkScenario");
 
-TestFrameworkScenario::TestFrameworkScenario(const ScenarioConfiguration &configuration) {
+TestFrameworkScenario::TestFrameworkScenario(const ScenarioConfiguration &configuration,
+                                             const FmsTestBenchFactory &bench_factory) {
    SetScenarioName(configuration.GetScenarioName());
 #ifdef MITRE_BADA3_LIBRARY
    if (configuration.bada_data_path.empty())
@@ -45,7 +47,9 @@ TestFrameworkScenario::TestFrameworkScenario(const ScenarioConfiguration &config
 #endif
    int aircraft_id = 1;
    for (const auto &aircraft : configuration.aircraft) {
-      m_aircraft_in_scenario.push_back(FrameworkAircraftLoader(aircraft, aircraft_id++).BuildAircraft());
+      auto bench = bench_factory ? bench_factory(aircraft, aircraft_id) : std::make_shared<NullFmsTestBench>();
+      m_aircraft_in_scenario.push_back(FrameworkAircraftLoader(aircraft, aircraft_id, bench).BuildAircraft());
+      ++aircraft_id;
    }
 }
 

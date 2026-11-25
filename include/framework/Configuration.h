@@ -19,27 +19,12 @@
 #pragma once
 
 #include <filesystem>
-#include <optional>
 #include <string>
 #include <vector>
 
 namespace mitre::oss::taft {
 struct RunConfiguration {
    std::vector<std::filesystem::path> scenario_files;
-};
-
-struct GuidanceConfiguration {
-   std::filesystem::path vfp_csv_file;
-   std::filesystem::path hfp_csv_file;
-   std::filesystem::path waypoint_sequence_csv_file;
-   bool hfp_compute_xy{true};
-   std::optional<double> planned_transition_altitude_feet;
-   std::optional<double> planned_cruise_mach;
-};
-
-struct SpeedCommandsConfiguration {
-   std::filesystem::path csv_file;
-   double pilot_delay_seconds{0};
 };
 
 struct AircraftConfiguration {
@@ -49,9 +34,6 @@ struct AircraftConfiguration {
    double initial_mass_fraction{0.5};
    std::filesystem::path env_csv_file;
    std::string env_data_index{"time"};
-   std::filesystem::path traffic_csv_file;
-   GuidanceConfiguration guidance;
-   std::optional<SpeedCommandsConfiguration> speed_commands;
 };
 
 struct ScenarioConfiguration {

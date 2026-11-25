@@ -34,12 +34,13 @@ and an independent version sequence beginning at `0.0.1`.
   build scripts; use that version when reproducing CI locally.
 - Internet access on the first configure, or a populated CPM source cache.
   CMake fetches the public dependencies automatically.
-- An aircraft-performance provider and its data for simulation runs. These are
-  not required for the public unit tests or `TAFT --version`.
+- An FMS test bench and an aircraft-performance provider with its data for
+  simulation runs. The public build supports unit tests and `TAFT --version`
+  with its defaults.
 
 TAFT pins `aircraft_simulation_core` to `2.1.2` and `yaml-cpp` to `0.9.0`.
-Run manifests and scenario settings use YAML. Trajectory, truth-weather,
-traffic, and speed-command time series remain CSV inputs. The root
+Run manifests and scenario settings use YAML. Scenarios can load truth-weather
+samples from CSV. The root
 [CMakeLists.txt](https://github.com/mitre/taft/blob/main/CMakeLists.txt)
 contains the dependency versions.
 
@@ -78,8 +79,7 @@ alias is `mitre::oss::taft`.
 Propagating the aircraft dynamics requires an aircraft-performance
 implementation. The public build supplies `NullAircraftPerformance` so that the
 project can compile and run provider-independent tests, but its performance
-methods throw when called. A successful build or `--version` check does not
-mean that a full simulation can run without a provider.
+methods throw when called.
 
 MITRE's internal implementation uses EUROCONTROL BADA data. That implementation
 and its licensed data are not included in the public repository or release
@@ -122,22 +122,17 @@ bada_data_path: /path/to/bada
 aircraft:
   - ac_type: REPLACE_WITH_AIRCRAFT_CODE
     speed_management_type: pitch
-    guidance:
-      hfp_csv_file: example-horizontal-path.csv
-      hfp_compute_xy: false
-      vfp_csv_file: example-vertical-profile.csv
-    speed_commands:
-      csv_file: example-speed-commands.csv
-      pilot_delay_seconds: 0
+    env_csv_file: example-weather.csv
 ```
 
 The [Run_Files directory](https://github.com/mitre/taft/tree/main/Run_Files)
-contains a complete YAML template and public CSV inputs. Replace the aircraft
-code and BADA path with values for your provider. A public build can parse the
-configuration, but a full simulation requires a real performance provider and
-its data. `bada_data_path` is required when using the BADA integration.
+contains YAML templates and example CSV files. The standalone CLI parses the
+template and reports `No FMS test bench configured.` when setting up the aircraft.
+To run a simulation, pass a `TestFrameworkScenario::FmsTestBenchFactory` from
+your application and supply an aircraft-performance provider. 
+`bada_data_path` is required when using the BADA integration.
 
-Launch from the repository root, for example:
+To check the standalone CLI with the template, run this from the repository root.
 
 ```bash
 ./build/bin/TAFT Run_Files/test-framework-configuration.yaml
@@ -164,30 +159,7 @@ Aircraft settings:
 | `initial_time_seconds` | Nonnegative integer; defaults to `0`. |
 | `initial_mass_fraction` | Fraction in `[0, 1]`; defaults to `0.5`. |
 | `env_csv_file` | Optional truth-weather CSV; omission uses zero wind. |
-| `env_data_index` | `time` (default) or `dtg`. |
-| `traffic_csv_file` | Optional prerecorded ADS-B traffic CSV. |
-| `guidance` | Required trajectory configuration described below. |
-| `speed_commands` | Optional CSV speed playback and pilot delay. Omission uses planned guidance. |
-
-Guidance requires `vfp_csv_file` and exactly one of `hfp_csv_file` or
-`waypoint_sequence_csv_file`. `hfp_compute_xy` defaults to `true` for HFP data.
-The bundled HFP example uses its stored projected X/Y geometry and sets
-`hfp_compute_xy: false`; its legacy geodetic columns are not consistent with
-that geometry. Use `true` for inputs whose geodetic positions and turn data agree.
-To select Mach at and above a transition altitude, specify both
-`planned_transition_altitude_feet` and `planned_cruise_mach` (in `[0, 1]`).
-Omitting the pair selects IAS guidance throughout the profile.
-
-The `speed_commands` mapping requires `csv_file`; `pilot_delay_seconds` is
-nonnegative and defaults to zero. Its CSV has a header followed by at least two
-samples with time in seconds and IAS in meters per second. Times must be finite
-and strictly increasing; speeds must be positive and finite. Playback overrides
-planned IAS/Mach selection with the replayed IAS while a delayed sample is
-available. Outside that interval, planned guidance applies.
-
-Unknown YAML fields, missing required settings, invalid values, and conflicting
-horizontal sources are errors reported with their file and field. Legacy text
-configuration and sample-algorithm integration settings are no longer supported.
+| `env_data_index` | `time` (default) or `dtg`, the distance-to-go reported by the bench.
 
 Logging is configured by `log4cplus.properties`; the repository and binary
 packages include a starting configuration.

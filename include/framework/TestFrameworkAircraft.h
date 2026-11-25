@@ -18,23 +18,19 @@
 
 #pragma once
 
-#include <scalar/Length.h>
+#include <log4cplus/logger.h>
 
 #include <memory>
 #include <vector>
 
-#include "framework/GuidanceFromStaticData.h"
+#include "framework/FmsTestBench.h"
 #include "framework/WeatherTruthFromStaticData.h"
 #include "public/AircraftControl.h"
 #include "public/AircraftState.h"
 #include "public/FixedMassAircraftPerformance.h"
-#include "public/FlightDeckApplication.h"
-#include "public/NullADSBReceiver.h"
-#include "public/NullFlightDeckApplication.h"
 #include "public/ScenarioEntity.h"
 #include "public/SimulationTime.h"
 #include "public/ThreeDOFDynamics.h"
-#include "public/WeatherTruth.h"
 
 namespace mitre::oss::taft {
 
@@ -46,13 +42,7 @@ class TestFrameworkAircraft final : public mitre::oss::simcore::ScenarioEntity {
 
    const int GetStartTime() const override { return m_states[0].GetTime().value(); };
 
-   bool IsFinished() const override {
-      return m_guidance_calculator->GetEstimatedDistanceAlongPath() < Units::ZERO_LENGTH;
-   }
-
-   std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> GetFlightDeckApplication() const {
-      return m_speed_application;
-   }
+   bool IsFinished() const override { return m_fms_test_bench->IsFinished(); }
 
    class Builder final {
      public:
@@ -62,9 +52,7 @@ class TestFrameworkAircraft final : public mitre::oss::simcore::ScenarioEntity {
            aircraft_control_(),
            true_weather_(
                  std::make_shared<WeatherTruthFromStaticData>(WeatherTruthFromStaticData::CreateZeroTruthWind())),
-           receiver_(std::make_shared<mitre::oss::simcore::NullADSBReceiver>()),
-           guidance_calculator_(),
-           speed_application_(std::make_shared<mitre::oss::simcore::NullFlightDeckApplication>()),
+           fms_test_bench_(),
            initial_state_() {};
       ~Builder() = default;
       std::shared_ptr<TestFrameworkAircraft> Build() const;
@@ -72,10 +60,7 @@ class TestFrameworkAircraft final : public mitre::oss::simcore::ScenarioEntity {
       Builder *WithAircraftDynamics(std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> &dynamics);
       Builder *WithAircraftControl(std::shared_ptr<mitre::oss::simcore::AircraftControl> &control);
       Builder *WithTrueWeather(std::shared_ptr<WeatherTruthFromStaticData> &true_weather);
-      Builder *WithAdsbReceiver(std::shared_ptr<mitre::oss::simcore::ADSBReceiver> &receiver);
-      Builder *WithGuidanceCalculator(std::shared_ptr<GuidanceFromStaticData> &guidance_calculator);
-      Builder *WithFlightDeckApplication(
-            std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> &speed_application);
+      Builder *WithFmsTestBench(const std::shared_ptr<FmsTestBench> &bench);
       Builder *WithInitialState(const mitre::oss::simcore::AircraftState &initial_state);
 
       std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> GetAircraftPerformance() const {
@@ -86,11 +71,7 @@ class TestFrameworkAircraft final : public mitre::oss::simcore::ScenarioEntity {
       }
       std::shared_ptr<mitre::oss::simcore::AircraftControl> GetAircraftControl() const { return aircraft_control_; }
       std::shared_ptr<WeatherTruthFromStaticData> GetWeatherTruth() const { return true_weather_; }
-      std::shared_ptr<mitre::oss::simcore::ADSBReceiver> GetAdsbReceiver() const { return receiver_; }
-      std::shared_ptr<GuidanceFromStaticData> GetGuidanceCalculator() const { return guidance_calculator_; }
-      std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> GetFligthDeckApplication() const {
-         return speed_application_;
-      }
+      std::shared_ptr<FmsTestBench> GetFmsTestBench() const { return fms_test_bench_; }
       const mitre::oss::simcore::AircraftState &GetInitialState() const { return initial_state_; }
 
      private:
@@ -98,9 +79,7 @@ class TestFrameworkAircraft final : public mitre::oss::simcore::ScenarioEntity {
       std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> aircraft_dynamics_model_;
       std::shared_ptr<mitre::oss::simcore::AircraftControl> aircraft_control_;
       std::shared_ptr<WeatherTruthFromStaticData> true_weather_;
-      std::shared_ptr<mitre::oss::simcore::ADSBReceiver> receiver_;
-      std::shared_ptr<GuidanceFromStaticData> guidance_calculator_;
-      std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> speed_application_;
+      std::shared_ptr<FmsTestBench> fms_test_bench_;
       mitre::oss::simcore::AircraftState initial_state_;
    };
 
@@ -109,18 +88,14 @@ class TestFrameworkAircraft final : public mitre::oss::simcore::ScenarioEntity {
   private:
    static log4cplus::Logger m_logger;
 
-   TestFrameworkAircraft();
-
    void SaveState(mitre::oss::simcore::AircraftState &state, const mitre::oss::simcore::SimulationTime &time);
    void AddLatitudeLongitude(mitre::oss::simcore::AircraftState &state) const;
 
    std::shared_ptr<WeatherTruthFromStaticData> m_weather_truth;
-   std::shared_ptr<mitre::oss::simcore::ADSBReceiver> m_adsb_receiver;
    std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> m_dynamics;
-   std::shared_ptr<GuidanceFromStaticData> m_guidance_calculator;
+   std::shared_ptr<FmsTestBench> m_fms_test_bench;
    std::shared_ptr<mitre::oss::simcore::AircraftControl> m_aircraft_control;
    std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> m_bada_calculator;
-   std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> m_speed_application;
    std::vector<mitre::oss::simcore::AircraftState> m_states;
 };
 

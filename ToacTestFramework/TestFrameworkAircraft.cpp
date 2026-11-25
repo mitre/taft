@@ -19,6 +19,8 @@
 #include "framework/TestFrameworkAircraft.h"
 
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "public/Guidance.h"
 
@@ -30,37 +32,23 @@ using namespace mitre::oss::simcore;
 log4cplus::Logger TestFrameworkAircraft::m_logger =
       log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("TestFrameworkAircraft"));
 
-TestFrameworkAircraft::TestFrameworkAircraft()
-   : m_weather_truth(),
-     m_adsb_receiver(),
-     m_dynamics(),
-     m_guidance_calculator(),
-     m_aircraft_control(),
-     m_bada_calculator(),
-     m_speed_application(),
-     m_states() {}
-
 bool TestFrameworkAircraft::Update(const SimulationTime &time) {
    if (IsFinished()) return true;
    if (time.GetCurrentSimulationTime() <= m_states.cbegin()->GetTime()) {
       return false;
    }
 
-   mitre::oss::simcore::AircraftState previous_state = m_states.back();
+   const AircraftState &previous_state = m_states.back();
 
-   m_weather_truth->Update(time, m_guidance_calculator->GetEstimatedDistanceAlongPath(),
-                           previous_state.GetAltitudeMsl());
+   m_weather_truth->Update(time, m_fms_test_bench->GetDistanceToGo(), previous_state.GetAltitudeMsl());
 
-   Guidance current_guidance = m_guidance_calculator->Update(previous_state);
-   m_adsb_receiver->Receive(time, previous_state);
-   Guidance speed_guidance_from_application =
-         m_speed_application->Update(time, current_guidance, m_dynamics->GetDynamicsState(), previous_state);
-   if (speed_guidance_from_application.IsValid() && speed_guidance_from_application.m_ias_command > Units::ZERO_SPEED) {
-      current_guidance.m_ias_command = speed_guidance_from_application.m_ias_command;
-      current_guidance.SetSelectedSpeedType(SpeedValueType::INDICATED_AIR_SPEED);
+   const Guidance current_guidance = m_fms_test_bench->Update(time, previous_state);
+   if (!current_guidance.IsValid()) {
+      throw std::runtime_error("FMS test bench returned invalid guidance for aircraft " +
+                               std::to_string(previous_state.GetUniqueId()));
    }
    AircraftState state_result =
-         m_dynamics->Update(m_states.back().GetUniqueId(), time, current_guidance, m_aircraft_control);
+         m_dynamics->Update(previous_state.GetUniqueId(), time, current_guidance, m_aircraft_control);
    SaveState(state_result, time);
 
    return IsFinished();
@@ -74,14 +62,12 @@ std::shared_ptr<TestFrameworkAircraft> TestFrameworkAircraft::Builder::Build() c
 
 TestFrameworkAircraft::TestFrameworkAircraft(const Builder &builder)
    : m_weather_truth(builder.GetWeatherTruth()),
-     m_adsb_receiver(builder.GetAdsbReceiver()),
      m_dynamics(builder.GetDynamicsModel()),
-     m_guidance_calculator(builder.GetGuidanceCalculator()),
+     m_fms_test_bench(builder.GetFmsTestBench()),
      m_aircraft_control(builder.GetAircraftControl()),
      m_bada_calculator(builder.GetAircraftPerformance()),
-     m_speed_application(builder.GetFligthDeckApplication()) {
-   auto initial_state = builder.GetInitialState();
-   m_states.push_back(initial_state);
+     m_states{builder.GetInitialState()} {
+   if (!m_fms_test_bench) throw std::invalid_argument("An FMS test bench is required");
 }
 
 TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAircraftPerformance(
@@ -108,21 +94,9 @@ TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithTrueWeather(
    return this;
 }
 
-TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithAdsbReceiver(
-      std::shared_ptr<mitre::oss::simcore::ADSBReceiver> &receiver) {
-   receiver_ = receiver;
-   return this;
-}
-
-TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithGuidanceCalculator(
-      std::shared_ptr<GuidanceFromStaticData> &guidance_calculator) {
-   guidance_calculator_ = guidance_calculator;
-   return this;
-}
-
-TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithFlightDeckApplication(
-      std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> &speed_application) {
-   speed_application_ = speed_application;
+TestFrameworkAircraft::Builder *TestFrameworkAircraft::Builder::WithFmsTestBench(
+      const std::shared_ptr<FmsTestBench> &bench) {
+   fms_test_bench_ = bench;
    return this;
 }
 

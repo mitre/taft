@@ -20,10 +20,12 @@
 
 #include <log4cplus/logger.h>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
 #include "framework/Configuration.h"
+#include "framework/FmsTestBench.h"
 #include "framework/TestFrameworkAircraft.h"
 #include "public/Scenario.h"
 #include "public/SimulationTime.h"
@@ -31,7 +33,10 @@
 namespace mitre::oss::taft {
 class TestFrameworkScenario final : public mitre::oss::simcore::Scenario {
   public:
-   explicit TestFrameworkScenario(const ScenarioConfiguration &configuration);
+   using FmsTestBenchFactory = std::function<std::shared_ptr<FmsTestBench>(const AircraftConfiguration &, int)>;
+
+   explicit TestFrameworkScenario(const ScenarioConfiguration &configuration,
+                                  const FmsTestBenchFactory &bench_factory = {});
    void SimulateAllIterations() override;
 
   private:
