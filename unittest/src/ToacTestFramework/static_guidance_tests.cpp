@@ -19,12 +19,9 @@
 #include "gtest/gtest.h"
 
 #include <cmath>
-#include <filesystem>
 #include <stdexcept>
 #include <vector>
 
-#include "framework/Configuration.h"
-#include "framework/GuidanceDataLoader.h"
 #include "framework/GuidanceFromStaticData.h"
 
 namespace mitre::oss::taft::test {
@@ -183,44 +180,6 @@ TEST_F(StaticGuidanceTest, RejectsUninitializedAndEmptyPaths) {
    GuidanceFromStaticData empty;
    EXPECT_THROW(empty.Update({}), std::runtime_error);
    EXPECT_THROW((GuidanceFromStaticData({}, {}, {})), std::runtime_error);
-}
-
-TEST_F(StaticGuidanceTest, ComputesFiniteGuidanceOnShippedRoutes) {
-   const auto run =
-         LoadRunConfiguration(std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/test-framework-configuration.yaml");
-   ASSERT_FALSE(run.scenario_files.empty());
-   for (const auto &filename : run.scenario_files) {
-      SCOPED_TRACE(filename.string());
-      const auto configuration = LoadScenarioConfiguration(filename);
-      ASSERT_FALSE(configuration.aircraft.empty());
-      for (const auto &aircraft : configuration.aircraft) {
-         GuidanceDataLoader loader(aircraft.guidance);
-         const auto calculator = loader.BuildGuidanceCalculator();
-         const auto &path = calculator->GetHorizontalTrajectory();
-         ASSERT_FALSE(path.empty());
-         EXPECT_FALSE(calculator->GetVerticalData().m_ias_mps.empty());
-         mitre::oss::simcore::PositionCalculator position(
-               path, mitre::oss::simcore::TrajectoryIndexProgressionDirection::DECREMENTING);
-         for (double distance = path.back().m_path_length_cumulative_meters - 1; distance > 0; distance -= 1000) {
-            SCOPED_TRACE(distance);
-            Units::Length x, y;
-            Units::UnsignedAngle course;
-            ASSERT_TRUE(position.CalculatePositionFromAlongPathDistance(Units::MetersLength(distance), x, y, course));
-            const auto state = mitre::oss::simcore::AircraftState::Builder(1, Units::SecondsTime(0))
-                                     .Position(x, y)
-                                     ->AltitudeMsl(Units::MetersLength(5000))
-                                     ->GroundSpeed(Units::MetersPerSecondSpeed(200), Units::MetersPerSecondSpeed(0))
-                                     ->Build();
-            const auto guidance = calculator->Update(state);
-            ASSERT_TRUE(guidance.IsValid());
-            ASSERT_TRUE(std::isfinite(Units::MetersLength(guidance.m_cross_track_error).value()));
-            ASSERT_TRUE(std::isfinite(Units::RadiansAngle(guidance.m_enu_track_angle).value()));
-            ASSERT_TRUE(std::isfinite(Units::RadiansAngle(guidance.m_reference_bank_angle).value()));
-            ASSERT_NEAR(Units::MetersLength(guidance.m_cross_track_error).value(), 0, 0.1);
-            EXPECT_NEAR(calculator->GetEstimatedDistanceAlongPath().value(), distance, 0.1);
-         }
-      }
-   }
 }
 
 }

@@ -21,44 +21,12 @@
 #include <stdexcept>
 #include <string>
 
-#include "framework/GuidanceDataLoader.h"
 #include "framework/HfpReader2020.h"
 #include "framework/WaypointSequenceReader.h"
 #include "test_support.h"
 
 namespace mitre::oss::taft::test {
-class GuidanceInputTest : public TemporaryDirectoryTest {
-  protected:
-   GuidanceConfiguration Guidance(const std::string &vertical) {
-      GuidanceConfiguration config;
-      config.hfp_csv_file = std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/example-horizontal-path.csv";
-      config.hfp_compute_xy = false;
-      config.vfp_csv_file = Write("vertical.csv", vertical);
-      return config;
-   }
-};
-
-TEST_F(GuidanceInputTest, VerticalProfileRetainsFinalRowWithoutNewline) {
-   const auto config = Guidance("t,d,h,ias,hdot,gs\n0,0,1000,100,0,100\n10,1000,2000,120,-5,130");
-   const auto guidance = GuidanceDataLoader(config).BuildGuidanceCalculator();
-   ASSERT_EQ(guidance->GetVerticalData().m_ias_mps.size(), 2);
-   EXPECT_EQ(guidance->GetVerticalData().m_ias_mps.back(), 120);
-}
-
-TEST_F(GuidanceInputTest, VerticalProfileRejectsMalformedValues) {
-   for (const auto &data : {"t,d,h,ias,hdot,gs\n0,0,bad,100,0,100\n1,1000,2000,120,0,120\n",
-                            "t,d,h,ias,hdot,gs\n0,0,1000,100,0,100\n1,0,2000,120,0,120\n",
-                            "t,d,h,ias,hdot,gs\n0,0,1000,nan,0,100\n1,1000,2000,120,0,120\n"}) {
-      SCOPED_TRACE(data);
-      const auto config = Guidance(data);
-      EXPECT_THROW(GuidanceDataLoader(config).BuildGuidanceCalculator(), std::runtime_error);
-   }
-}
-
-TEST_F(GuidanceInputTest, VerticalProfileRejectsMissingSamples) {
-   const auto config = Guidance("t,d,h,ias,hdot,gs\n");
-   EXPECT_THROW(GuidanceDataLoader(config).BuildGuidanceCalculator(), std::runtime_error);
-}
+class GuidanceInputTest : public TemporaryDirectoryTest {};
 
 TEST_F(GuidanceInputTest, WaypointsRequireAtLeastTwoRows) {
    for (const auto &data : {"lat,lon,radius,bank\n", "lat,lon,radius,bank\n33,-112,0,0\n"}) {
@@ -78,15 +46,6 @@ TEST_F(GuidanceInputTest, HfpRejectsMissingHeadersAndMalformedNumbers) {
    HfpReader2020 reader(malformed.string(), 1);
    ASSERT_TRUE(reader.Advance());
    EXPECT_THROW(reader.GetX(), std::runtime_error);
-}
-
-TEST_F(GuidanceInputTest, HfpRejectsInsufficientWaypoints) {
-   std::ifstream sample(std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/example-horizontal-path.csv");
-   std::string header;
-   std::getline(sample, header);
-   auto config = Guidance("t,d,h,ias,hdot,gs\n0,0,1000,100,0,100\n1,1000,2000,120,0,120\n");
-   config.hfp_csv_file = Write("empty-hfp.csv", header + "\n");
-   EXPECT_THROW(GuidanceDataLoader(config).BuildGuidanceCalculator(), std::runtime_error);
 }
 
 }

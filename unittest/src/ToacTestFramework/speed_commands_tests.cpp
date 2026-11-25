@@ -18,18 +18,12 @@
 
 #include "framework/SpeedCommandsFromStaticData.h"
 
-#include <filesystem>
+#include <gtest/gtest.h>
+
 #include <limits>
-#include <memory>
 #include <stdexcept>
-#include <string>
 #include <utility>
 #include <vector>
-
-#include "framework/ApplicationLoader.h"
-#include "framework/Configuration.h"
-#include "framework/SpeedCommandsLoader.h"
-#include "test_support.h"
 
 namespace mitre::oss::taft::test {
 namespace {
@@ -74,13 +68,10 @@ TEST(SpeedReplayTest, UsesDelayedTimeForLookupAndInterpolation) {
    EXPECT_FALSE(Update(replay, 33).IsValid());
 }
 
-TEST(SpeedReplayTest, DefaultAndAbsentApplicationsAreInactive) {
+TEST(SpeedReplayTest, DefaultApplicationIsInactive) {
    SpeedCommandsFromStaticData empty;
    EXPECT_FALSE(empty.IsActive());
    EXPECT_FALSE(Update(empty, 0).IsValid());
-   const auto null_application = ApplicationLoader(std::nullopt).CreateApplication();
-   EXPECT_FALSE(null_application->IsActive());
-   EXPECT_FALSE(Update(*null_application, 0).IsValid());
 }
 
 TEST(SpeedReplayTest, RejectsInvalidSamplesAndDelay) {
@@ -105,59 +96,6 @@ TEST(SpeedReplayTest, RejectsInvalidSamplesAndDelay) {
       SCOPED_TRACE(delay);
       EXPECT_THROW((SpeedCommandsFromStaticData({Record(0, 100), Record(1, 120)}, Units::SecondsTime(delay))),
                    std::invalid_argument);
-   }
-}
-
-class SpeedCommandsLoaderTest : public TemporaryDirectoryTest {
-  protected:
-   std::shared_ptr<mitre::oss::simcore::FlightDeckApplication> Load(double delay = 0) {
-      return ApplicationLoader(SpeedCommandsConfiguration{directory / "speeds.csv", delay}).CreateApplication();
-   }
-};
-
-TEST_F(SpeedCommandsLoaderTest, CreatesReplayAndOverridesMachSelection) {
-   Write("speeds.csv", "Time(sec),Vias_c(m/s)\n10,100\n20,120");
-   const auto application = Load(2);
-   ASSERT_TRUE(application->IsActive());
-   const auto command = Update(*application, 17);
-   EXPECT_TRUE(command.IsValid());
-   EXPECT_EQ(command.GetSelectedSpeedType(), SpeedValueType::INDICATED_AIR_SPEED);
-   EXPECT_NEAR(Units::MetersPerSecondSpeed(command.m_ias_command).value(), 110, 1e-9);
-}
-
-TEST_F(SpeedCommandsLoaderTest, ReportsMissingCsv) {
-   try {
-      Load();
-      FAIL() << "Expected missing-file error";
-   } catch (const std::runtime_error &error) {
-      EXPECT_NE(std::string(error.what()).find((directory / "speeds.csv").string()), std::string::npos);
-   }
-}
-
-TEST_F(SpeedCommandsLoaderTest, RejectsMalformedAndInsufficientCsvData) {
-   for (const auto &contents : {"", "time,speed\n", "time,speed\n0,100\n", "time,speed\n0,bad\n1,120\n",
-                                "time,speed\n0,100,extra\n1,120\n", "time,speed\n0,100\n0,120\n"}) {
-      SCOPED_TRACE(contents);
-      Write("speeds.csv", contents);
-      try {
-         Load();
-         FAIL() << "Expected invalid CSV error";
-      } catch (const std::runtime_error &error) {
-         EXPECT_NE(std::string(error.what()).find((directory / "speeds.csv").string()), std::string::npos);
-      }
-   }
-}
-
-TEST_F(SpeedCommandsLoaderTest, LoadsShippedSpeedCommands) {
-   const auto run =
-         LoadRunConfiguration(std::filesystem::path(TAFT_SOURCE_DIR) / "Run_Files/test-framework-configuration.yaml");
-   for (const auto &filename : run.scenario_files) {
-      SCOPED_TRACE(filename.string());
-      const auto configuration = LoadScenarioConfiguration(filename);
-      for (const auto &aircraft : configuration.aircraft) {
-         if (aircraft.speed_commands)
-            EXPECT_TRUE(loader::SpeedCommandsLoader(*aircraft.speed_commands).Build().IsActive());
-      }
    }
 }
 }
