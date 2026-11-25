@@ -94,36 +94,10 @@ class ConfigurationReader {
       if (!std::isfinite(value)) Fail(field, "must be finite");
    }
 
-   GuidanceConfiguration Guidance(const YAML::Node &node, const std::string &field) const {
-      Map(node, field,
-          {"vfp_csv_file", "hfp_csv_file", "waypoint_sequence_csv_file", "hfp_compute_xy",
-           "planned_transition_altitude_feet", "planned_cruise_mach"});
-      GuidanceConfiguration config;
-      config.vfp_csv_file = Path(node["vfp_csv_file"], field + ".vfp_csv_file");
-      config.hfp_csv_file = OptionalPath(node, "hfp_csv_file", field);
-      config.waypoint_sequence_csv_file = OptionalPath(node, "waypoint_sequence_csv_file", field);
-      if (config.hfp_csv_file.empty() == config.waypoint_sequence_csv_file.empty())
-         Fail(field, "provide exactly one of hfp_csv_file or waypoint_sequence_csv_file");
-      config.hfp_compute_xy = Optional<bool>(node, "hfp_compute_xy", field, true);
-      if (static_cast<bool>(node["planned_transition_altitude_feet"]) != static_cast<bool>(node["planned_cruise_mach"]))
-         Fail(field, "planned_transition_altitude_feet and planned_cruise_mach must be specified together");
-      if (node["planned_cruise_mach"]) {
-         const double mach = Scalar<double>(node["planned_cruise_mach"], field + ".planned_cruise_mach");
-         const double altitude =
-               Scalar<double>(node["planned_transition_altitude_feet"], field + ".planned_transition_altitude_feet");
-         Finite(mach, field + ".planned_cruise_mach");
-         Finite(altitude, field + ".planned_transition_altitude_feet");
-         if (mach < 0 || mach > 1) Fail(field + ".planned_cruise_mach", "must be between 0 and 1");
-         config.planned_cruise_mach = mach;
-         config.planned_transition_altitude_feet = altitude;
-      }
-      return config;
-   }
-
    AircraftConfiguration Aircraft(const YAML::Node &node, const std::string &field) const {
       Map(node, field,
           {"ac_type", "speed_management_type", "initial_time_seconds", "initial_mass_fraction", "env_csv_file",
-           "env_data_index", "traffic_csv_file", "guidance", "speed_commands"});
+           "env_data_index"});
       AircraftConfiguration config;
       config.ac_type = String(node["ac_type"], field + ".ac_type");
       config.speed_management_type = String(node["speed_management_type"], field + ".speed_management_type");
@@ -139,19 +113,6 @@ class ConfigurationReader {
       config.env_data_index = Optional<std::string>(node, "env_data_index", field, "time");
       if (config.env_data_index != "time" && config.env_data_index != "dtg")
          Fail(field + ".env_data_index", "expected time or dtg");
-      config.traffic_csv_file = OptionalPath(node, "traffic_csv_file", field);
-      config.guidance = Guidance(node["guidance"], field + ".guidance");
-      if (node["speed_commands"]) {
-         const auto speed = node["speed_commands"];
-         const auto speed_field = field + ".speed_commands";
-         Map(speed, speed_field, {"csv_file", "pilot_delay_seconds"});
-         SpeedCommandsConfiguration commands;
-         commands.csv_file = Path(speed["csv_file"], speed_field + ".csv_file");
-         commands.pilot_delay_seconds = Optional<double>(speed, "pilot_delay_seconds", speed_field, 0);
-         Finite(commands.pilot_delay_seconds, speed_field + ".pilot_delay_seconds");
-         if (commands.pilot_delay_seconds < 0) Fail(speed_field + ".pilot_delay_seconds", "must not be negative");
-         config.speed_commands = commands;
-      }
       return config;
    }
 
