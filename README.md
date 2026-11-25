@@ -21,11 +21,11 @@
 TAFT is a C++ framework for running aircraft-dynamics scenarios and collecting
 CSV results for TOAC in-the-loop testing. It was initialized from a source
 copy of [FMACM](https://github.com/mitre/FMACM). Runs and scenarios are configured
-with YAML; trajectory and time-series inputs use CSV.
+with YAML, and an FMS test bench supplies flight guidance.
 
 The public source supports building and unit testing without licensed aircraft
-performance data. Running a simulation requires an external aircraft-performance
-provider and its data.
+performance data. Running a simulation requires an FMS test bench and an external
+aircraft-performance provider with its data.
 
 ## Documentation
 
