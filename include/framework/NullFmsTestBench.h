@@ -30,7 +30,7 @@ class NullFmsTestBench final : public FmsTestBench {
 
    mitre::oss::simcore::Guidance Update(const mitre::oss::simcore::SimulationTime &,
                                       const mitre::oss::simcore::AircraftState &) override {
-      throw std::runtime_error("No FMS test bench configured");
+      throw std::runtime_error("No FMS test bench configured.");
    }
 
    Units::Length GetDistanceToGo() const override { return Units::infinity(); }
