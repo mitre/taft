@@ -37,7 +37,7 @@ class FmsTestBench {
       Units::Length altitude_msl;
       Units::Speed indicated_airspeed;
       Units::Angle ground_course_enu;
-      std::shared_ptr<mitre::oss::simcore::EllipsoidlPositionEstimator> position_estimator;
+      std::shared_ptr<mitre::oss::simcore::EllipsoidalPositionEstimator> position_estimator;
    };
 
    virtual ~FmsTestBench() = default;
