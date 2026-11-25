@@ -18,23 +18,16 @@
 
 #include "framework/FrameworkAircraftLoader.h"
 
-#include <scalar/Length.h>
-
 #include <algorithm>
+#include <cctype>
 #include <memory>
+#include <stdexcept>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include "framework/NullAircraftPerformance.h"
-#include "framework/PreloadedAdsbReceiver.h"
 #include "public/AircraftControllerFactory.h"
-#include "public/EllipsoidalPositionEstimator.h"
 #include "public/FullWindTrueWeatherOperator.h"
-#include "public/LegacyPositionEstimator.h"
-#include "public/NullADSBReceiver.h"
-#include "public/SpeedOnPitchControl.h"
-#include "public/SpeedOnThrustControl.h"
 
 #ifdef MITRE_BADA3_LIBRARY
 #include "bada/Bada3Factory.h"
@@ -44,34 +37,30 @@ namespace mitre::oss::taft {
 
 using namespace mitre::oss::simcore;
 
-FrameworkAircraftLoader::FrameworkAircraftLoader(const AircraftConfiguration &configuration, int aircraft_id)
+FrameworkAircraftLoader::FrameworkAircraftLoader(const AircraftConfiguration &configuration, int aircraft_id,
+                                                 std::shared_ptr<FmsTestBench> bench)
    : m_aircraft_id(aircraft_id),
      m_start_time(configuration.initial_time_seconds),
      m_mass_fraction(configuration.initial_mass_fraction),
      m_ac_type(configuration.ac_type),
      m_speed_management_type(configuration.speed_management_type),
-     m_traffic_csv_file(configuration.traffic_csv_file.string()),
      m_env_csv_file(configuration.env_csv_file.string()),
      m_env_csv_data_index(configuration.env_data_index),
-     m_guidance_loader(configuration.guidance),
-     m_flightdeck_application_loader(configuration.speed_commands) {}
+     m_fms_test_bench(std::move(bench)) {
+   if (!m_fms_test_bench) throw std::invalid_argument("An FMS test bench is required");
+}
 
 std::shared_ptr<TestFrameworkAircraft> FrameworkAircraftLoader::BuildAircraft() {
+   const auto initial_conditions = m_fms_test_bench->GetInitialConditions();
+   if (!initial_conditions.position_estimator) {
+      throw std::runtime_error("Supplied FMS test bench did not provide a position estimator for aircraft " +
+                               std::to_string(m_aircraft_id));
+   }
    auto bada_calculator = BuildAircraftPerformance(m_ac_type);
-   auto guidance_calculator = m_guidance_loader.BuildGuidanceCalculator();
-   auto true_weather =
-         BuildTrueWeather(m_env_csv_file, m_env_csv_data_index,
-                          Units::MetersLength(guidance_calculator->GetVerticalData().m_altitude_meters.back()));
-   m_initial_local_position = ComputeInitialPositionOnPath(guidance_calculator);
-   EarthModel::GeodeticPosition wgs84;
-   m_guidance_loader.GetTangentPlaneSequence()->ConvertLocalToGeodetic(m_initial_local_position, wgs84);
-   auto dynamics = BuildAircraftDynamics(bada_calculator, true_weather, guidance_calculator, wgs84);
+   auto true_weather = BuildTrueWeather(m_env_csv_file, m_env_csv_data_index, initial_conditions.altitude_msl);
+   auto dynamics = BuildAircraftDynamics(bada_calculator, true_weather, initial_conditions);
    auto control = BuildAircraftControl(m_speed_management_type, bada_calculator);
-   auto receiver = BuildAdsbReceiver(m_traffic_csv_file);
-   auto initial_state =
-         BuildInitialState(dynamics, Units::SecondsTime(m_start_time),
-                           Units::MetersLength(guidance_calculator->GetVerticalData().m_altitude_meters.back()), wgs84);
-   auto flightdeck_application = m_flightdeck_application_loader.CreateApplication();
+   const auto initial_state = BuildInitialState(dynamics, initial_conditions);
 
    TestFrameworkAircraft::Builder builder;
    return builder.WithInitialState(initial_state)
@@ -79,9 +68,7 @@ std::shared_ptr<TestFrameworkAircraft> FrameworkAircraftLoader::BuildAircraft() 
          ->WithAircraftDynamics(dynamics)
          ->WithAircraftControl(control)
          ->WithTrueWeather(true_weather)
-         ->WithAdsbReceiver(receiver)
-         ->WithGuidanceCalculator(guidance_calculator)
-         ->WithFlightDeckApplication(flightdeck_application)
+         ->WithFmsTestBench(m_fms_test_bench)
          ->Build();
 }
 
@@ -99,82 +86,20 @@ std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> FrameworkAirc
 }
 
 std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> FrameworkAircraftLoader::BuildAircraftDynamics(
-      std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> &performance,
-      std::shared_ptr<WeatherTruthFromStaticData> &true_weather, std::shared_ptr<GuidanceFromStaticData> &guidance,
-      const EarthModel::GeodeticPosition &initial_wgs84_position) {
-   auto initial_altitude = Units::MetersLength(guidance->GetVerticalData().m_altitude_meters.back());
-   Units::KnotsSpeed initial_ias = Units::MetersPerSecondSpeed(guidance->GetVerticalData().m_ias_mps.back());
-   DirectionOfFlightCourseCalculator course_calculator = DirectionOfFlightCourseCalculator(
-         guidance->GetHorizontalTrajectory(), TrajectoryIndexProgressionDirection::UNDEFINED);
-   Units::Angle initial_heading = course_calculator.GetCourseAtPathStart();
-   true_weather->Update(mitre::oss::simcore::SimulationTime::Of(Units::SecondsTime(m_start_time)), Units::infinity(),
-                        initial_altitude);
-   Units::KnotsSpeed initial_tas = true_weather->getAtmosphere()->CAS2TAS(initial_ias, initial_altitude);
-   std::shared_ptr<mitre::oss::simcore::EllipsoidalPositionEstimator> position_estimator =
-         std::make_shared<mitre::oss::simcore::LegacyPositionEstimator>(m_guidance_loader.GetTangentPlaneSequence(),
-                                                                        initial_wgs84_position);
+      const std::shared_ptr<mitre::oss::simcore::FixedMassAircraftPerformance> &performance,
+      const std::shared_ptr<WeatherTruthFromStaticData> &true_weather,
+      const FmsTestBench::InitialConditions &initial_conditions) {
+   const auto start_time = SimulationTime::Of(Units::SecondsTime(m_start_time));
+   true_weather->Update(start_time, m_fms_test_bench->GetDistanceToGo(), initial_conditions.altitude_msl);
+   const auto initial_tas =
+         true_weather->getAtmosphere()->CAS2TAS(initial_conditions.indicated_airspeed, initial_conditions.altitude_msl);
    std::shared_ptr<mitre::oss::simcore::TrueWeatherOperator> true_weather_operator =
          std::make_shared<mitre::oss::simcore::FullWindTrueWeatherOperator>(true_weather);
    auto dynamics = std::make_shared<mitre::oss::simcore::ThreeDOFDynamics>();
-   dynamics->Initialize(mitre::oss::simcore::SimulationTime::Of(Units::SecondsTime(m_start_time)), performance,
-                        initial_wgs84_position, m_initial_local_position, initial_altitude, initial_tas,
-                        initial_heading, m_mass_fraction, position_estimator, true_weather_operator);
+   dynamics->Initialize(start_time, performance, initial_conditions.geodetic_position, initial_conditions.local_position,
+                        initial_conditions.altitude_msl, initial_tas, initial_conditions.ground_course_enu,
+                        m_mass_fraction, initial_conditions.position_estimator, true_weather_operator);
    return dynamics;
-}
-
-std::tuple<bool, EarthModel::LocalPositionEnu> FrameworkAircraftLoader::IsDistanceAlongPathValid(
-      std::shared_ptr<GuidanceFromStaticData> &guidance_calculator,
-      const Units::Length &target_distance_along_path) const {
-   static Units::MetersLength along_path_distance_tolerance(10);
-   const auto expected_trajectory_index = guidance_calculator->GetHorizontalTrajectory().size() - 1;
-   AlongPathDistanceCalculator along_path_calculator(guidance_calculator->GetHorizontalTrajectory(),
-                                                     TrajectoryIndexProgressionDirection::DECREMENTING);
-   PositionCalculator position_calculator(guidance_calculator->GetHorizontalTrajectory(),
-                                          TrajectoryIndexProgressionDirection::DECREMENTING);
-
-   Units::Length computed_along_path_distance;
-   Units::Length on_path_position_x(Units::negInfinity()), on_path_position_y(Units::negInfinity());
-   Units::UnsignedAngle course_at_point(Units::negInfinity());
-
-   try {
-      position_calculator.CalculatePositionFromAlongPathDistance(target_distance_along_path, on_path_position_x,
-                                                                 on_path_position_y, course_at_point);
-      along_path_calculator.CalculateAlongPathDistanceFromPosition(on_path_position_x, on_path_position_y,
-                                                                   computed_along_path_distance);
-      bool is_position_valid =
-            (along_path_calculator.GetCurrentTrajectoryIndex() == expected_trajectory_index) &&
-            (position_calculator.GetCurrentTrajectoryIndex() == expected_trajectory_index) &&
-            (Units::abs(computed_along_path_distance - target_distance_along_path) < along_path_distance_tolerance);
-      EarthModel::LocalPositionEnu local_position_enu =
-            EarthModel::LocalPositionEnu::Of(on_path_position_x, on_path_position_y, Units::zero());
-      return std::make_tuple(is_position_valid, local_position_enu);
-   } catch (std::exception &e) {
-      return std::make_tuple(false, EarthModel::LocalPositionEnu::OfZeros());
-   }
-}
-
-EarthModel::LocalPositionEnu FrameworkAircraftLoader::ComputeInitialPositionOnPath(
-      std::shared_ptr<GuidanceFromStaticData> &guidance_calculator) {
-   static Units::MetersLength along_path_distance_step(1);
-
-   Units::Length dtg_guess =
-         Units::MetersLength(guidance_calculator->GetHorizontalTrajectory().back().m_path_length_cumulative_meters);
-   auto dtg_result = IsDistanceAlongPathValid(guidance_calculator, dtg_guess);
-   bool dtg_is_valid = std::get<0>(dtg_result);
-   int loop_counter = 0;
-   while (!dtg_is_valid && loop_counter < 100) {
-      dtg_guess = dtg_guess - along_path_distance_step;
-      dtg_result = IsDistanceAlongPathValid(guidance_calculator, dtg_guess);
-      dtg_is_valid = std::get<0>(dtg_result);
-      ++loop_counter;
-   }
-   if (!dtg_is_valid) {
-      std::string msg =
-            "Unable to find a start position on the path that passes validation checks; the HFP file may be malformed";
-      throw std::runtime_error(msg);
-   }
-
-   return std::get<1>(dtg_result);
 }
 
 std::shared_ptr<WeatherTruthFromStaticData> FrameworkAircraftLoader::BuildTrueWeather(
@@ -209,30 +134,18 @@ std::shared_ptr<mitre::oss::simcore::AircraftControl> FrameworkAircraftLoader::B
    return aircraft_control;
 }
 
-std::shared_ptr<mitre::oss::simcore::ADSBReceiver> FrameworkAircraftLoader::BuildAdsbReceiver(
-      std::string traffic_csv_file) {
-   if (!traffic_csv_file.empty()) {
-      const Units::NauticalMilesLength adsb_reception_distance(90);
-      std::shared_ptr<mitre::oss::simcore::ADSBReceiver> adsb_receiver =
-            std::make_shared<PreloadedAdsbReceiver>(traffic_csv_file, m_guidance_loader.GetTangentPlaneSequence());
-      adsb_receiver->Initialize(adsb_reception_distance);
-      return adsb_receiver;
-   }
-   return std::make_shared<mitre::oss::simcore::NullADSBReceiver>();
-}
-
 mitre::oss::simcore::AircraftState FrameworkAircraftLoader::BuildInitialState(
-      std::shared_ptr<mitre::oss::simcore::ThreeDOFDynamics> &dynamics, Units::Time start_time,
-      Units::Length initial_altitude, const EarthModel::GeodeticPosition &wgs84_position) {
-   std::pair<Units::Speed, Units::Speed> wind_components = dynamics->GetWindComponents();
-   return mitre::oss::simcore::AircraftState::Builder(m_aircraft_id, start_time)
-         .Position(m_initial_local_position.x, m_initial_local_position.y)
-         ->Latitude(wgs84_position.latitude)
-         ->Longitude(wgs84_position.longitude)
-         ->AltitudeMsl(initial_altitude)
-         ->GroundSpeed(dynamics->GetDynamicsState().xd, dynamics->GetDynamicsState().yd)
+      const mitre::oss::simcore::ThreeDOFDynamics &dynamics, const FmsTestBench::InitialConditions &initial_conditions) {
+   const auto wind_components = dynamics.GetWindComponents();
+   const auto dynamics_state = dynamics.GetDynamicsState();
+   return mitre::oss::simcore::AircraftState::Builder(m_aircraft_id, Units::SecondsTime(m_start_time))
+         .Position(initial_conditions.local_position.x, initial_conditions.local_position.y)
+         ->Latitude(initial_conditions.geodetic_position.latitude)
+         ->Longitude(initial_conditions.geodetic_position.longitude)
+         ->AltitudeMsl(initial_conditions.altitude_msl)
+         ->GroundSpeed(dynamics_state.xd, dynamics_state.yd)
          ->SensedWindComponents(wind_components.first, wind_components.second)
-         ->DynamicsState(dynamics->GetDynamicsState())
+         ->DynamicsState(dynamics_state)
          ->Build();
 }
 
