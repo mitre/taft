@@ -60,7 +60,7 @@ std::shared_ptr<TestFrameworkAircraft> FrameworkAircraftLoader::BuildAircraft() 
    auto true_weather = BuildTrueWeather(m_env_csv_file, m_env_csv_data_index, initial_conditions.altitude_msl);
    auto dynamics = BuildAircraftDynamics(bada_calculator, true_weather, initial_conditions);
    auto control = BuildAircraftControl(m_speed_management_type, bada_calculator);
-   const auto initial_state = BuildInitialState(dynamics, initial_conditions);
+   const auto initial_state = BuildInitialState(*dynamics, initial_conditions);
 
    TestFrameworkAircraft::Builder builder;
    return builder.WithInitialState(initial_state)
